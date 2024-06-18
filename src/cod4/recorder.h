@@ -4,12 +4,6 @@
 
 namespace recorder
 {
-	struct Recording
-	{
-		std::string name;
-		std::vector<Smallcmd> cmds;
-	};
-
 	struct Smallcmd
 	{
 		int servertime;
@@ -19,6 +13,17 @@ namespace recorder
 		char sidemove;
 		unsigned short nextFps;
 	};
+	
+	struct Recording
+	{
+		std::string name;
+		std::vector<Smallcmd> cmds = {};
+
+		Recording(std::string name)
+			: name(name)
+		{}
+	};
+
 
 	inline unsigned int recordedCmds = 0;
 	inline std::vector<Smallcmd> recording;

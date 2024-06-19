@@ -16,6 +16,18 @@ namespace hooks
 		return HookAddr((LPVOID)(global::baseAddress + offset), detour, ppOrig);
 	}
 
+	inline uintptr_t VMTEntryHook(uintptr_t VMT, size_t Index, uintptr_t Destination)
+	{
+		uintptr_t* Address = (uintptr_t*)(VMT + Index * sizeof(uintptr_t));
+
+		DWORD OldProtection{ 0 };
+		VirtualProtect(Address, sizeof(uintptr_t), PAGE_READWRITE, &OldProtection);
+		uintptr_t result = *Address;
+		*Address = Destination;
+		VirtualProtect(Address, sizeof(uintptr_t), OldProtection, &OldProtection);
+		return result;
+	}
+
 	unsigned long d3dVMT = 0;
 	void Init()
 	{
@@ -28,16 +40,17 @@ namespace hooks
 
 		d3dVMT = **(unsigned long**)(global::baseAddress + d3dids::device.offset);
 
-		printf("hooking EndScene : %s\n",
-			MH_StatusToString(
-				HookAddr((void*)(d3dVMT + d3dindex::end_scene * sizeof(void*)), EndScene, &orig_EndScene)));
+		orig_EndScene = VMTEntryHook(d3dVMT, d3dindex::end_scene, (uintptr_t)EndScene);
+		printf("hooking EndScene : %x\n", orig_EndScene);
 
-		printf("hooking Reset : %s\n",
-			MH_StatusToString(
-				HookAddr((void*)(d3dVMT + d3dindex::reset * sizeof(void*)), Reset, &orig_Reset)));
+		orig_Reset = VMTEntryHook(d3dVMT, d3dindex::reset, (uintptr_t)Reset);
+		printf("hooking Reset : %x\n", orig_Reset);
 	}
 	void Detach()
 	{
+		VMTEntryHook(d3dVMT, d3dindex::end_scene, orig_EndScene);
+		VMTEntryHook(d3dVMT, d3dindex::reset, orig_Reset);
+
 		MH_DisableHook(MH_ALL_HOOKS);
 
 		MH_Uninitialize();

@@ -40,10 +40,10 @@ namespace hooks
 	inline void* orig_CL_CreateCmd = nullptr;
 	usercmd_t* CL_CreateCmd(usercmd_t* cmd, int localClientNum);
 
-	inline void* orig_EndScene = nullptr;
+	inline uintptr_t orig_EndScene = 0;
 	HRESULT __stdcall EndScene(LPDIRECT3DDEVICE9 pDevice);
 
-	inline void* orig_Reset = nullptr;
+	inline uintptr_t orig_Reset = 0;
 	HRESULT __stdcall Reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pp);
 
 	void Init();

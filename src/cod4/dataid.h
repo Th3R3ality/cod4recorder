@@ -23,6 +23,11 @@ namespace funcids
 
 }
 
+namespace d3dids
+{
+	constexpr SigOffsetPair device = { SIGWITHSIZE(""), 0, 0xC89A408 };
+}
+
 namespace dvarids
 {
 	constexpr SigOffsetPair com_maxfps = { SIGWITHSIZE(""), 0, 0x1076EF8 };
@@ -30,8 +35,6 @@ namespace dvarids
 	constexpr SigOffsetPair cl_paused = { SIGWITHSIZE(""), 0, 0x1035D48 };
 	constexpr SigOffsetPair sv_paused = { SIGWITHSIZE(""), 0, 0x1076ED4 };
 	constexpr SigOffsetPair sv_running = { SIGWITHSIZE(""), 0, 0x1035D60 };
-	
-	
 }
 
 #undef SIGWITHSIZE

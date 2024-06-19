@@ -1,35 +1,37 @@
-#pragma once
 #include "hk_decl.h"
-//#include "../../imgui/imgui.h"
-//#include "../../imgui/imgui_impl_dx9.h"
-
+#include "../../includes.h"
+#include "../../imgui/include.h"
+#include "../../global.h"
 #include "../../userinterface.h"
 
-bool initialized = false;
-
-void InitImGui(IDirect3DDevice9* device)
+void InitImGui(LPDIRECT3DDEVICE9 pDevice)
 {
-    //ImGui::CreateContext();
-    //ImGui_ImplDX9_Init(device);
-
-    //initialized = true;
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags = ImGuiConfigFlags_NoMouseCursorChange;
+	ImGui_ImplWin32_Init(global::window);
+	ImGui_ImplDX9_Init(pDevice);
 }
 
-HRESULT __stdcall hooks::EndScene(IDirect3DDevice9* device)
+bool init = false;
+HRESULT __stdcall hooks::EndScene(LPDIRECT3DDEVICE9 pDevice)
 {
-    //if (!initialized)
-    //    InitImGui(device);
+	if (!init)
+	{
+		InitImGui(pDevice);
+		init = true;
+	}
 
-    //userinterface::Draw();
-    //ImGui::GetIO().MouseDrawCursor = false;
+	userinterface::Draw();
+	ImGui::GetIO().MouseDrawCursor = false;
 
-    return ((decltype(&EndScene))orig_EndScene)(device);
+	return ((decltype(&EndScene))orig_EndScene)(pDevice);
 }
 
 HRESULT __stdcall hooks::Reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pp)
 {
-    //ImGui_ImplDX9_InvalidateDeviceObjects();
-    const auto result = ((decltype(&Reset))orig_Reset)(device, pp);
-    //ImGui_ImplDX9_CreateDeviceObjects();
-    return result;
+	ImGui_ImplDX9_InvalidateDeviceObjects();
+	const auto result = ((decltype(&Reset))orig_Reset)(device, pp);
+	ImGui_ImplDX9_CreateDeviceObjects();
+	return result;
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include "../../includes.h"
-#include "../../minhook/include.h"
+#include "../../minhook/MinHook.h"
 
 #include "../../global.h"
 
@@ -25,6 +25,7 @@ __asm pop ecx \
 __asm pop ebx \
 __asm pop eax 
 
+
 namespace hooks
 {
 	namespace d3dindex
@@ -33,18 +34,18 @@ namespace hooks
 		constexpr auto end_scene = 42;
 	}
 
-	inline void* orig_EndScene = nullptr;
-	HRESULT __stdcall EndScene(IDirect3DDevice9* device);
-
-	inline void* orig_Reset = nullptr;
-	HRESULT __stdcall Reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pp);	
-
 	inline void* orig_CL_Frame = nullptr;
 	void CL_Frame(int localClientNum);
 
 	inline void* orig_CL_CreateCmd = nullptr;
 	usercmd_t* CL_CreateCmd(usercmd_t* cmd, int localClientNum);
 
+	inline void* orig_EndScene = nullptr;
+	HRESULT __stdcall EndScene(LPDIRECT3DDEVICE9 pDevice);
+
+	inline void* orig_Reset = nullptr;
+	HRESULT __stdcall Reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pp);
+
 	void Init();
-	void Unload();
+	void Detach();
 }

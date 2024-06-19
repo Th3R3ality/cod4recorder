@@ -7,31 +7,18 @@
 #include "cod4/include.h"
 #include "savefile.h"
 
+#include "imgui/include.h"
+
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT __stdcall WndProc(const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void InitImGui(LPDIRECT3DDEVICE9 pDevice);
-long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice);
 
-EndScene oEndScene = NULL;
-WNDPROC oWndProc;
+typedef LRESULT(CALLBACK* WNDPROC)(HWND, UINT, WPARAM, LPARAM);
+WNDPROC orig_WndProc;
 
 DWORD WINAPI MainThread(HMODULE hModule)
 {
 	global::baseAddress = (DWORD)GetModuleHandleA(NULL);
-
-	bool attached = false;
-	do
-	{
-		if (kiero::init(kiero::RenderType::D3D9) == kiero::Status::Success)
-		{
-			kiero::bind(42, (void**)& oEndScene, hkEndScene);
-			do
-				global::window = GetProcessWindow();
-			while (global::window == NULL);
-			oWndProc = (WNDPROC)SetWindowLongPtr(global::window, GWL_WNDPROC, (LONG_PTR)WndProc);
-			attached = true;
-		}
-	} while (!attached);
+	global::window = GetProcessWindow();
 
 	AllocConsole();
 	FILE* f;
@@ -42,6 +29,8 @@ DWORD WINAPI MainThread(HMODULE hModule)
 	savefile::Init();
 	timing::Init();
 	hooks::Init();
+
+	orig_WndProc = (WNDPROC)SetWindowLongPtr(global::window, GWL_WNDPROC, (LONG_PTR)WndProc);
 
 	while (!global::wantsQuit)
 	{
@@ -73,35 +62,18 @@ DWORD WINAPI MainThread(HMODULE hModule)
 			global::wantsReplay = true;
 	}
 
-	kiero::shutdown();
+	hooks::Detach();
 
 	HWND consoleHwnd = GetConsoleWindow();
 
 	FreeConsole();
 	PostMessageA(consoleHwnd, WM_CLOSE, 0, 0);
 
-	SetWindowLongPtr(global::window, GWL_WNDPROC, (LONG_PTR)oWndProc);
+	SetWindowLongPtr(global::window, GWL_WNDPROC, (LONG_PTR)orig_WndProc);
 	FreeLibraryAndExitThread(hModule, 0);
 
 	return TRUE;
 }
-
-bool init = false;
-long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice)
-{
-	if (!init)
-	{
-		InitImGui(pDevice);
-		init = true;
-	}
-
-	userinterface::Draw();
-	ImGui::GetIO().MouseDrawCursor = false;
-
-	return oEndScene(pDevice);
-}
-
-
 BOOL WINAPI DllMain(HMODULE hMod, DWORD dwReason, LPVOID lpReserved)
 {
 	switch (dwReason)
@@ -123,13 +95,5 @@ LRESULT __stdcall WndProc(const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	if (true && ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam))
 		return true;
 
-	return CallWindowProc(oWndProc, hWnd, uMsg, wParam, lParam);
-}
-void InitImGui(LPDIRECT3DDEVICE9 pDevice)
-{
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
-	io.ConfigFlags = ImGuiConfigFlags_NoMouseCursorChange;
-	ImGui_ImplWin32_Init(global::window);
-	ImGui_ImplDX9_Init(pDevice);
+	return CallWindowProc(orig_WndProc, hWnd, uMsg, wParam, lParam);
 }

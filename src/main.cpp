@@ -5,6 +5,7 @@
 #include "window.h"
 #include "input.h"
 #include "cod4/include.h"
+#include "savefile.h"
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT __stdcall WndProc(const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -14,11 +15,9 @@ long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice);
 EndScene oEndScene = NULL;
 WNDPROC oWndProc;
 
-
 DWORD WINAPI MainThread(HMODULE hModule)
 {
 	global::baseAddress = (DWORD)GetModuleHandleA(NULL);
-	timing::Init();
 
 	bool attached = false;
 	do
@@ -38,8 +37,10 @@ DWORD WINAPI MainThread(HMODULE hModule)
 	FILE* f;
 	freopen_s(&f, "CONOUT$", "w", stdout);
 	printf("hello\n");
-	printf("%x", global::baseAddress);
+	printf("BaseAddress : %x\n", global::baseAddress);
 
+	savefile::Init();
+	timing::Init();
 	hooks::Init();
 
 	while (!global::wantsQuit)

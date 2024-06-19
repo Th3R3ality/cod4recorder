@@ -2,6 +2,7 @@
 #include "includes.h"
 #include "global.h"
 #include "cod4/include.h"
+#include "savefile.h"
 
 #include <string>
 #include <format>
@@ -9,6 +10,7 @@
 namespace userinterface
 {
 	void DrawMenu();
+	void DrawDebugMenu();
 	void DrawIndicators();
 	void DrawIndicator(ImVec2 pos, ImVec2 size, std::string text);
 	void TextCentered(std::string text);
@@ -24,6 +26,7 @@ namespace userinterface
 		{
 			ImGui::GetIO().MouseDrawCursor = true;
 			DrawMenu();
+			DrawDebugMenu();
 			//ImGui::ShowDemoWindow();
 		}
 		DrawIndicators();
@@ -120,6 +123,31 @@ namespace userinterface
 					replayer::replayIndex = 0;
 				}
 			}
+			End();
+
+			if (CollapsingHeader("Peek Saved Replays"))
+			{
+				auto& weakRecordings = savefile::PeekSavedRecordings();
+
+				for (auto& weak : weakRecordings)
+				{
+					if (!weak.inUse)
+						continue;
+
+					Text("%s : %i", weak.name, weak.cmdCount);
+				}
+			}
+		}
+	}
+
+	void DrawDebugMenu()
+	{
+		using namespace ImGui;
+
+		{
+			Begin("Debug Controls");
+
+			Checkbox("Debug prints", &global::debugPrints);
 
 			End();
 		}
@@ -129,9 +157,9 @@ namespace userinterface
 	{
 		using namespace ImGui;
 		RECT clientRect;
+		GetClientRect(global::window, &clientRect);
 		ImVec2 defaultSize = ImVec2(160, 60);
 
-		GetClientRect(global::window, &clientRect);
 		{
 			if (userinterface::replayCountDown > 0)
 			{
@@ -140,7 +168,9 @@ namespace userinterface
 			}
 			else if (replayer::isReplaying)
 			{
-				std::string text = std::format("[- {} / {} -]", replayer::replayIndex + 1, recorder::recording.size());
+				std::string text = std::format("[- {} / {} -]",
+					replayer::replayIndex + 1,
+					recorder::recordings.at(replayer::selectedRecordingIndex).cmds.size());
 				DrawIndicator(ImVec2(clientRect.right / 2 - defaultSize.x / 2, (clientRect.bottom * 3) / 4), defaultSize, text);
 			}
 			if (userinterface::recordCountDown > 0)
@@ -150,7 +180,7 @@ namespace userinterface
 			}
 			else if (recorder::isRecording)
 			{
-				std::string text = std::format("[+ {} +]", recorder::recording.size());
+				std::string text = std::format("[+ {} +]", recorder::currentRecording.cmds.size());
 				DrawIndicator(ImVec2(clientRect.right / 2 - defaultSize.x / 2, (clientRect.bottom * 3) / 4), defaultSize, text);
 			}
 		}

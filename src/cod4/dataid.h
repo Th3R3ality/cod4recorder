@@ -26,6 +26,12 @@ namespace funcids
 namespace dvarids
 {
 	constexpr SigOffsetPair com_maxfps = { SIGWITHSIZE(""), 0, 0x1076EF8 };
+	constexpr SigOffsetPair cl_ingame = { SIGWITHSIZE(""), 0, 0x85F8F0 };
+	constexpr SigOffsetPair cl_paused = { SIGWITHSIZE(""), 0, 0x1035D48 };
+	constexpr SigOffsetPair sv_paused = { SIGWITHSIZE(""), 0, 0x1076ED4 };
+	constexpr SigOffsetPair sv_running = { SIGWITHSIZE(""), 0, 0x1035D60 };
+	
+	
 }
 
 #undef SIGWITHSIZE

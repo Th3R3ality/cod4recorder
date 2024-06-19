@@ -1,6 +1,7 @@
 #include "recorder.h"
 
 #include <iostream>
+#include <format>
 
 #include "../timing.h"
 #include "../userinterface.h"
@@ -19,7 +20,8 @@ namespace recorder
 		userinterface::recordCountDown = 0;
 		printf("0\n");
 
-		recorder::recording.clear();
+		recordings.push_back(Recording(std::format("Recording %i", recordings.size())));
+		currentRecording = recordings.at(recordings.size() - 1);
 
 		recordedCmds = 0;
 		isRecording = true;

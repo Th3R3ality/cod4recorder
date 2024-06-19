@@ -36,14 +36,14 @@ __declspec(noinline) void __fastcall logic(usercmd_t* cmd, int localClientNum)
 		scmd.forwardmove = cmd->forwardmove;
 		scmd.sidemove = cmd->sidemove;
 		scmd.nextFps = 0;
-		recorder::recording.push_back(scmd);
+		recorder::currentRecording.cmds.push_back(scmd);
 
-		if (recorder::recording.size() > 1)
+		if (recorder::currentRecording.cmds.size() > 1)
 		{
 			unsigned short currentFps = dvar_maxfps->current.integer;
 			if (currentFps != g_lastFps)
 			{
-				recorder::recording.at(recorder::recording.size() - 2).nextFps = currentFps;
+				recorder::currentRecording.cmds.at(recorder::currentRecording.cmds.size() - 2).nextFps = currentFps;
 			}
 
 			g_lastFps = dvar_maxfps->current.integer;
@@ -55,19 +55,19 @@ __declspec(noinline) void __fastcall logic(usercmd_t* cmd, int localClientNum)
 
 	if (replayer::isReplaying)
 	{
-		if (replayer::replayIndex >= recorder::recording.size())
+		if (replayer::replayIndex >= recorder::currentRecording.cmds.size())
 		{
 			replayer::replayIndex = 0;
 			replayer::isReplaying = false;
 			return;
 		}
-		auto& smallcmd = recorder::recording.at(replayer::replayIndex);
+		auto& smallcmd = recorder::currentRecording.cmds.at(replayer::replayIndex);
 
 		if (replayer::replayIndex == 0)
 		{
 			startServertime = cmd->servertime;
-			viewangle0offset = recorder::recording.at(0).viewangles[0] - cmd->viewangles[0];
-			viewangle1offset = recorder::recording.at(0).viewangles[1] - cmd->viewangles[1];
+			viewangle0offset = recorder::currentRecording.cmds.at(0).viewangles[0] - cmd->viewangles[0];
+			viewangle1offset = recorder::currentRecording.cmds.at(0).viewangles[1] - cmd->viewangles[1];
 		}
 
 

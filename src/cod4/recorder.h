@@ -24,9 +24,9 @@ namespace recorder
 		{}
 	};
 
-
 	inline unsigned int recordedCmds = 0;
-	inline std::vector<Smallcmd> recording;
+	inline std::vector<Recording> recordings = { Recording("test")};
+	inline Recording& currentRecording = recordings.at(0);
 	inline bool isRecording = false;
 
 	void BeginRecording();

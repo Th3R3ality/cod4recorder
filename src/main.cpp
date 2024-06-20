@@ -38,7 +38,7 @@ DWORD WINAPI MainThread(HMODULE hModule)
 		
 		if (global::wantsRecord && !recorder::isRecording && !replayer::isReplaying)
 		{
-			recorder::BeginRecording();
+			recorder::NewRecording();
 		}
 		if (global::wantsReplay && !replayer::isReplaying && !recorder::isRecording)
 		{
@@ -46,8 +46,7 @@ DWORD WINAPI MainThread(HMODULE hModule)
 				replayer::Play(userinterface::selectedRecordingIndex);
 			else
 			{
-				userinterface::ToggleMenu(-1);
-				timing::Wait(SECOND * 0.25f);
+				timing::Wait(SECOND * 0.5f);
 				PostMessageA(global::window, WM_KEYDOWN, 'E', MapVirtualKey('E', MAPVK_VK_TO_VSC));
 				PostMessageA(global::window, WM_KEYUP, 'E', MapVirtualKey('E', MAPVK_VK_TO_VSC));
 				timing::Wait(SECOND * 0.25f);

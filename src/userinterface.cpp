@@ -11,9 +11,15 @@
 #include <string>
 #include <format>
 
+#define PUSHGREYBTN \
+PushStyleColor(ImGuiCol_Button, ImColor(50, 200, 100, 80).Value); \
+PushStyleColor(ImGuiCol_ButtonHovered, ImColor(50, 190, 110, 200).Value); \
+PushStyleColor(ImGuiCol_ButtonActive, ImColor(50, 200, 150, 255).Value);
+
 namespace userinterface
 {
-	void DrawMenu();
+	void DrawControls();
+	void DrawRecordingsMenu();
 	void DrawDebugMenu();
 	void DrawIndicators();
 	void DrawIndicator(ImVec2 pos, ImVec2 size, std::string text);
@@ -24,19 +30,36 @@ namespace userinterface
 		using namespace ImGui;
 		ImGui_ImplDX9_NewFrame();
 		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
+		NewFrame();
 
 		if (userinterface::showMenu)
 		{
-			ImGui::GetIO().MouseDrawCursor = true;
-			DrawMenu();
-			DrawDebugMenu();
-			//ImGui::ShowDemoWindow();
+			GetIO().MouseDrawCursor = true;
+
+			BeginMainMenuBar();
+			
+			static bool showControlsMenu = true;
+			static bool showReplaysMenu = true;
+			static bool showDebugMenu = true;
+			static bool showDemoMenu = false;
+
+			Checkbox("Controls", &showControlsMenu);
+			Checkbox("Replays", &showReplaysMenu);
+			Checkbox("Debug", &showDebugMenu);
+			Checkbox("ImGui Demo", &showDemoMenu);
+
+			ImGui::EndMainMenuBar();
+			
+			if (showControlsMenu) DrawControls();
+			if (showReplaysMenu) DrawRecordingsMenu();
+			if (showDebugMenu) DrawDebugMenu();
+			if (showDemoMenu) ShowDemoWindow();
 		}
+
 		DrawIndicators();
 
-		ImGui::EndFrame();
-		ImGui::Render();
+		EndFrame();
+		Render();
 		ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 	}
 
@@ -56,11 +79,11 @@ namespace userinterface
 		}
 
 		if (showMenu)
-			recorder::EndRecording();
+			recorder::StopRecording();
 	}
 
 
-	void DrawMenu()
+	void DrawControls()
 	{
 		using namespace ImGui;
 
@@ -96,52 +119,125 @@ namespace userinterface
 				userinterface::showMenu = false;
 			}
 
-			PushStyleColor(ImGuiCol_Button, ImColor(50, 200, 100, 80).Value);
-			PushStyleColor(ImGuiCol_ButtonHovered, ImColor(50, 190, 110, 200).Value);
-			PushStyleColor(ImGuiCol_ButtonActive, ImColor(50, 200, 150, 255).Value);
-			if (Button("Replay"))
-			{
-				global::wantsReplay = true;
-			}
-			PopStyleColor(3);
-
-			if (!replayer::autoReplay)
+			if (replayer::selectedRecordingIndex > -1 && replayer::selectedRecordingIndex < recorder::recordings.size())
 			{
 				PushStyleColor(ImGuiCol_Button, ImColor(50, 200, 100, 80).Value);
 				PushStyleColor(ImGuiCol_ButtonHovered, ImColor(50, 190, 110, 200).Value);
 				PushStyleColor(ImGuiCol_ButtonActive, ImColor(50, 200, 150, 255).Value);
-				if (Button("Auto Replay"))
+				if (Button("Replay"))
 				{
-					replayer::autoReplay = true;
+					global::wantsReplay = true;
 				}
 				PopStyleColor(3);
 
-			}
-			else
-			{
-				if (Button("Stop Auto Replay"))
+				if (!replayer::autoReplay)
 				{
-					replayer::autoReplay = false;
-					replayer::isReplaying = false;
-					global::wantsReplay = false;
-					replayer::replayIndex = 0;
+					PushStyleColor(ImGuiCol_Button, ImColor(50, 200, 100, 80).Value);
+					PushStyleColor(ImGuiCol_ButtonHovered, ImColor(50, 190, 110, 200).Value);
+					PushStyleColor(ImGuiCol_ButtonActive, ImColor(50, 200, 150, 255).Value);
+					if (Button("Auto Replay"))
+					{
+						replayer::autoReplay = true;
+						ToggleMenu(-1);
+					}
+					PopStyleColor(3);
+
+				}
+				else
+				{
+					if (Button("Stop Auto Replay"))
+					{
+						replayer::autoReplay = false;
+						replayer::isReplaying = false;
+						global::wantsReplay = false;
+						replayer::replayIndex = 0;
+					}
 				}
 			}
+			else
+				Button("No Replay Selected");
+
 			End();
 
-			if (CollapsingHeader("Peek Saved Replays"))
+		}
+	}
+
+	void DrawRecordingsMenu()
+	{
+		using namespace ImGui;
+		Begin("Recordings");
+
+		int idx = 0;
+		if (CollapsingHeader("Recordings in Memory"))
+		{
+			for (recorder::Recording& recording : recorder::recordings)
 			{
-				auto& weakRecordings = savefile::PeekSavedRecordings();
 
-				for (auto& weak : weakRecordings)
+				if (TreeNode(std::format("{}###mem{}", recording.name, recording.uuid).c_str()))
 				{
-					if (!weak.inUse)
-						continue;
+					Text("uuid : %llu", recording.uuid);
+					Text("cmds : %lu", recording.cmds.size());
+					Text("disk : %s", recording.onDisk ? "true" : "false");
+					if (replayer::selectedRecordingIndex != idx)
+					{
+						if (Button("Select"))
+							replayer::selectedRecordingIndex = idx;
+					}
+					else
+					{
+						if (Button("Deselect"))
+							replayer::selectedRecordingIndex = -1;
+					}
 
-					Text("%s : %i", weak.name, weak.cmdCount);
+					if (!recording.onDisk)
+					{
+						if (Button("Save to Disk"))
+							savefile::SaveRecordingToDisk(idx);
+					}
+					else
+					{
+						if (Button("Delete from Disk"))
+						{
+							savefile::DeleteRecordingOnDisk(recording.onDiskOffset);
+							recording.onDisk = false;
+						}
+					}
+
+					TreePop();
+				}
+
+				idx++;
+			}
+		}
+
+		if (CollapsingHeader("Peek Recordings on Disk"))
+		{
+			auto& diskRecordings = savefile::PeekSavedRecordings();
+
+			for (auto& disk : diskRecordings)
+			{
+				if (!disk.inUse)
+					continue;
+
+				if (TreeNode(std::format("{}###disk{}", disk.name, disk.uuid).c_str()))
+				{
+					Text("uuid : %llu", disk.uuid);
+					Text("cmds : %lu", disk.cmdCount);
+					Text("file @ %lu", disk.offset);
+
+					if (Button("Load"))
+						savefile::LoadRecordingFromDisk(disk.offset);
+					if (Button("Delete"))
+					{
+						savefile::DeleteRecordingOnDisk(disk.offset);
+						disk.inUse = false;
+					}
+
+					TreePop();
 				}
 			}
 		}
+		End();
 	}
 
 	void DrawDebugMenu()
@@ -184,7 +280,7 @@ namespace userinterface
 			}
 			else if (recorder::isRecording)
 			{
-				std::string text = std::format("[+ {} +]", recorder::currentRecording.cmds.size());
+				std::string text = std::format("[+ {} +]", recorder::recordings.at(recorder::currentRecordingIndex).cmds.size());
 				DrawIndicator(ImVec2(clientRect.right / 2 - defaultSize.x / 2, (clientRect.bottom * 3) / 4), defaultSize, text);
 			}
 		}

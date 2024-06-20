@@ -1,4 +1,5 @@
 #pragma once
+#include "recorder.h"
 
 namespace replayer
 {

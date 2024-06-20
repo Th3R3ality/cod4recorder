@@ -31,4 +31,10 @@ namespace replayer
 
 		isReplaying = true;
 	}
+	void Stop()
+	{
+		if (!isReplaying) return;
+		replayIndex = 0;
+		isReplaying = false;
+	}
 }

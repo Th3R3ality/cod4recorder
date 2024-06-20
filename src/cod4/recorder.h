@@ -17,19 +17,25 @@ namespace recorder
 	
 	struct Recording
 	{
-		std::string name;
+		char name[64] = {};
 		unsigned long long uuid;
 		std::vector<Smallcmd> cmds = {};
 		size_t onDiskOffset = 0;
 		bool onDisk = false;
 
 		Recording(std::string name, unsigned long long uuid)
-			: name(name), uuid(uuid)
-		{}
+			: uuid(uuid)
+		{
+			strncpy_s<sizeof(this->name)>(this->name, name.data(), sizeof(this->name)-1);
+			this->name[sizeof(this->name) - 1] = '\0';
+		}
 
 		Recording(std::string name)
-			: name(name), uuid(0)
+			: uuid(0)
 		{
+			strncpy_s<sizeof(this->name)>(this->name, name.data(), sizeof(this->name) - 1);
+			this->name[sizeof(this->name) - 1] = '\0';
+
 			std::random_device rd;
 			std::mt19937_64 rng(rd());
 			std::uniform_int_distribution<std::mt19937_64::result_type> distribution(0LL);
@@ -44,5 +50,5 @@ namespace recorder
 
 	void NewRecording();
 	void StopRecording();
-
+	void RecordingWasRemovedFromDisk(unsigned long long uuid);
 }

@@ -17,7 +17,6 @@ __declspec(noinline) void __fastcall logic(usercmd_t* cmd, int localClientNum)
 		printf("CL_CreateCmd\n");
 	static dvar_t* dvar_maxfps = GetDvar(dvarids::com_maxfps.offset);
 
-	global::createcmdcount++;
 
 	if (recorder::isRecording)
 	{
@@ -57,13 +56,15 @@ __declspec(noinline) void __fastcall logic(usercmd_t* cmd, int localClientNum)
 
 	if (replayer::isReplaying)
 	{
+		if (cmd->forwardmove != 0 || cmd->sidemove != 0)
+		{
+			return replayer::Stop();
+		}
 		auto& recording = recorder::recordings.at(replayer::selectedRecordingIndex);
 
 		if (replayer::replayIndex >= recording.cmds.size())
 		{
-			replayer::replayIndex = 0;
-			replayer::isReplaying = false;
-			return;
+			return replayer::Stop();
 		}
 		auto& smallcmd = recording.cmds.at(replayer::replayIndex);
 

@@ -118,6 +118,7 @@
     <ClInclude Include="src\cod4\types\dvar.h" />
     <ClInclude Include="src\cod4\types\include.h" />
     <ClInclude Include="src\cod4\types\usercmd.h" />
+    <ClInclude Include="src\debug.h" />
     <ClInclude Include="src\global.h" />
     <ClInclude Include="src\cod4\hooks\hk_decl.h" />
     <ClInclude Include="src\imgui\imconfig.h" />

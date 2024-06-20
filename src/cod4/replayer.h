@@ -9,4 +9,5 @@ namespace replayer
 	inline bool autoReplay = false;
 
 	void Play(int recordingIndex, bool autoHideMenu = true, bool skipDelay = false);
+	void Stop();
 }

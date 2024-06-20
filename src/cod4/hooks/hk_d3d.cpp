@@ -23,7 +23,6 @@ HRESULT __stdcall hooks::EndScene(LPDIRECT3DDEVICE9 pDevice)
 	}
 
 	userinterface::Draw();
-	ImGui::GetIO().MouseDrawCursor = false;
 
 	return ((decltype(&EndScene))orig_EndScene)(pDevice);
 }

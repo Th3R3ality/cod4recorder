@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <exception>
+#include "debug.h"
 
 namespace savefile
 {
@@ -41,8 +42,6 @@ namespace savefile
         if (!initialized) return peek;
         if (!dirtyPeek) return peek;
 
-        std::vector<DiskReplay> replaysInSaveFile;
-
         std::fstream f(savefilePath, std::ios::binary | std::ios::in);
         if (f.bad())
         {
@@ -50,6 +49,7 @@ namespace savefile
             return peek;
         }
         
+        size_t idx = 0;
         while (true)
         {
             DiskReplay curr(0);
@@ -58,12 +58,17 @@ namespace savefile
 
             if (f.gcount() != sizeof(DiskReplay))
                 break;
-            f.seekg(curr.cmdCount, std::ios_base::cur);
+            f.seekg(curr.fragmentCmdCap * sizeof(recorder::Smallcmd), std::ios_base::cur);
 
-            replaysInSaveFile.push_back(curr);
+            if (idx < peek.size())
+                peek.at(idx) = curr;
+            else
+                peek.push_back(curr);
+
+            idx++;
         }
-        
-        peek = replaysInSaveFile;
+        if (idx < peek.size())
+            peek.resize(idx);
 
         dirtyPeek = false;
         return peek;
@@ -71,88 +76,156 @@ namespace savefile
 
     SaveError SaveRecordingToDisk(int recordingIndex)
     {
-        if (!initialized) return SaveError::NotInitialized;
-        if (recordingIndex < 0 || recordingIndex >= recorder::recordings.size()) return SaveError::IndexOutOfRange;
+        if (!initialized) LOG_RET(SaveError::NotInitialized);
+        if (recordingIndex < 0 || recordingIndex >= recorder::recordings.size()) LOG_RET(SaveError::IndexOutOfRange);
 
         if (dirtyPeek)
             PeekSavedRecordings();
 
         recorder::Recording& recording = recorder::recordings.at(recordingIndex);
-        if (recording.onDisk) return SaveError::RecordingAlreadyOnDisk;
+        if (recording.onDisk) LOG_RET(SaveError::RecordingAlreadyOnDisk);
+
+        std::fstream f(savefilePath, std::ios::binary | std::ios::in | std::ios::out);
+        if (f.bad()) LOG_RET(SaveError::BadFile);
 
         size_t cmdCount = recording.cmds.size();
         for (auto& disk : peek)
         {
             if (disk.inUse)
                 continue;
-            if (cmdCount > disk.cmdCount)
+            if (cmdCount > disk.fragmentCmdCap)
                 continue;
 
             disk.inUse = true;
             disk.cmdCount = cmdCount;
-            strncpy_s<sizeof(DiskReplay::name)>(disk.name, recording.name.c_str(), sizeof(DiskReplay::name) - 1);
+            strncpy_s<sizeof(DiskReplay::name)>(disk.name, recording.name, sizeof(DiskReplay::name) - 1);
             disk.name[sizeof(DiskReplay::name)-1] = '\0';
             disk.uuid = recording.uuid;
 
-            std::fstream f(savefilePath, std::ios_base::binary | std::ios_base::out | std::ios_base::in);
-            f.seekp(disk.offset);
+            f.seekp(disk.offset, std::ios::beg);
             f.write((char*)&disk, sizeof(disk));
-
-            f.seekp(sizeof(disk), std::ios_base::cur);
             f.write((char*)recording.cmds.data(), cmdCount * sizeof(recorder::Smallcmd));
 
             recording.onDisk = true;
+            recording.onDiskOffset = disk.offset;
+
             //dirtyPeek = true;
-            return SaveError::None;
+            LOG_RET(SaveError::None);
         }
 
-
         DiskReplay disk;
-        strncpy_s<sizeof(DiskReplay::name)>(disk.name, recording.name.c_str(), sizeof(DiskReplay::name) - 1);
+        strncpy_s<sizeof(DiskReplay::name)>(disk.name, recording.name, sizeof(DiskReplay::name) - 1);
         disk.name[sizeof(DiskReplay::name) - 1] = '\0';
         disk.uuid = recording.uuid;
         disk.inUse = true;
         disk.cmdCount = recording.cmds.size();
+        disk.fragmentCmdCap = cmdCount;
 
-        std::fstream f(savefilePath, std::ios_base::app);
+        f.seekp(0, std::ios::end);
         disk.offset = f.tellp();
+        printf("saving recording @ %i\n", disk.offset);
         f.write((char*)&disk, sizeof(disk));
         f.write((char*)recording.cmds.data(), disk.cmdCount * sizeof(recorder::Smallcmd));
 
         recording.onDisk = true;
+        recording.onDiskOffset = disk.offset;
+
         peek.push_back(disk);
         //dirtyPeek = true;
-        return SaveError::None;
+        LOG_RET(SaveError::None);
     }
 
     SaveError DeleteRecordingOnDisk(unsigned long long uuid)
     {
-        if (!initialized) return SaveError::NotInitialized;
+        if (!initialized) LOG_RET(SaveError::NotInitialized);
         if (dirtyPeek) PeekSavedRecordings();
+
+        std::fstream f(savefilePath, std::ios::binary | std::ios::in | std::ios::out);
+        if (f.bad()) LOG_RET(SaveError::BadFile);
 
         bool foundOnDisk = false;
         for (auto& disk : peek)
         {
-            if (disk.uuid == uuid)
-            {
-                foundOnDisk = true;
-                disk.inUse = false;
+            if (disk.uuid != uuid)
+                continue;
+            if (!disk.inUse)
+                continue;
+            foundOnDisk = true;
 
-                std::fstream f(savefilePath);
-                f.seekp(disk.offset, std::ios::cur);
-                f.write((char*)&disk, sizeof(disk));
-                break;
-            }
+            disk.inUse = false;
+            f.seekp(disk.offset, std::ios::beg);
+            f.write((char*)&disk, sizeof(disk));
+
+            recorder::RecordingWasRemovedFromDisk(uuid);
+            break;
         }
-        if (!foundOnDisk) return SaveError::RecordingNotOnDisk;
+        if (!foundOnDisk) LOG_RET(SaveError::RecordingNotOnDisk);
 
         dirtyPeek = true;
-        return SaveError::None;
+        LOG_RET(SaveError::None);
     }
+
     SaveError LoadRecordingFromDisk(unsigned long long uuid)
     {
-        if (!initialized) return SaveError::NotInitialized;
+        if (!initialized) LOG_RET(SaveError::NotInitialized);
+        if (dirtyPeek) PeekSavedRecordings();
 
-        return SaveError::None;
+        std::fstream f(savefilePath, std::ios::binary | std::ios::in);
+        if (f.bad()) LOG_RET(SaveError::BadFile);
+
+        bool foundOnDisk = false;
+        for (auto& disk : peek)
+        {
+            if (disk.uuid != uuid)
+                continue;
+            if (!disk.inUse)
+                continue;
+            foundOnDisk = true;
+
+            recorder::Recording rec(disk.name, disk.uuid);
+            rec.onDisk = true;
+            rec.onDiskOffset = disk.offset;
+            rec.cmds.resize(disk.cmdCount);
+            f.seekg(disk.offset + sizeof(DiskReplay), std::ios::beg);
+            f.read((char*)rec.cmds.data(), disk.cmdCount * sizeof(recorder::Smallcmd));
+
+            recorder::recordings.push_back(rec);
+            break;
+        }
+        if (!foundOnDisk) LOG_RET(SaveError::RecordingNotOnDisk);
+
+        LOG_RET(SaveError::None);
+    }
+
+    constexpr const char* errorMessages[]
+    {
+        "None",
+        "NotInitialized",
+        "RecordingDoesntExist",
+        "IndexOutOfRange",
+        "RecordingAlreadyOnDisk",
+        "RecordingNotOnDisk",
+        "BadFile",
+    };
+    const char* GetErrorMessage(SaveError error)
+    {
+        switch (error)
+        {
+            case None:
+                return errorMessages[0];
+            case NotInitialized:
+                return errorMessages[1];
+            case RecordingDoesntExist:
+                return errorMessages[2];
+            case IndexOutOfRange:
+                return errorMessages[3];
+            case RecordingAlreadyOnDisk:
+                return errorMessages[4];
+            case RecordingNotOnDisk:
+                return errorMessages[5];
+            case BadFile:
+                return errorMessages[6];
+        }
+        return errorMessages[0];
     }
 }

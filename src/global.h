@@ -4,7 +4,6 @@
 
 namespace global
 {
-	inline unsigned int createcmdcount = 0;
 	inline usercmd_t cmd = {};
 	inline bool viewcmd = false;
 

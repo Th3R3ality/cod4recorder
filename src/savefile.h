@@ -7,10 +7,11 @@ namespace savefile
 {
 	struct DiskReplay
 	{
-		char name[64] = {};
+		char name[sizeof(recorder::Recording::name)] = {};
 		unsigned long long uuid = 0;
 		size_t offset = 0;
 		size_t cmdCount = 0;
+		size_t fragmentCmdCap = 0;
 		bool inUse = false;
 
 		DiskReplay() = default;
@@ -20,6 +21,7 @@ namespace savefile
 		{}
 	};
 
+	
 	enum SaveError
 	{
 		None = 0,
@@ -28,6 +30,7 @@ namespace savefile
 		IndexOutOfRange,
 		RecordingAlreadyOnDisk,
 		RecordingNotOnDisk,
+		BadFile,
 	};
 
 	void Init();
@@ -35,4 +38,5 @@ namespace savefile
 	SaveError SaveRecordingToDisk(int recordingIndex);
 	SaveError DeleteRecordingOnDisk(unsigned long long uuid);
 	SaveError LoadRecordingFromDisk(unsigned long long uuid);
+	const char* GetErrorMessage(SaveError error);
 }

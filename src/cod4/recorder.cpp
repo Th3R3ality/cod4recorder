@@ -33,4 +33,16 @@ namespace recorder
 		currentRecordingIndex = -1;
 		isRecording = false;
 	}
+	void RecordingWasRemovedFromDisk(unsigned long long uuid)
+	{
+		for (auto& recording : recordings)
+		{
+			if (recording.uuid != uuid)
+				continue;
+			
+			recording.onDisk = false;
+			recording.onDiskOffset = 0;
+			break;
+		}
+	}
 }

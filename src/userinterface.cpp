@@ -24,6 +24,12 @@ namespace userinterface
 	void DrawIndicators();
 	void DrawIndicator(ImVec2 pos, ImVec2 size, std::string text);
 	void TextCentered(std::string text);
+	void ButtonToggle(const char* label, bool& v);
+
+	bool showControlsMenu = true;
+	bool showReplaysMenu = true;
+	bool showDebugMenu = false;
+	bool showDemoMenu = false;
 
 	void Draw()
 	{
@@ -38,23 +44,21 @@ namespace userinterface
 
 			BeginMainMenuBar();
 			
-			static bool showControlsMenu = true;
-			static bool showReplaysMenu = true;
-			static bool showDebugMenu = true;
-			static bool showDemoMenu = false;
+			ButtonToggle("Controls", showControlsMenu);
+			ButtonToggle("Replays", showReplaysMenu);
+			ButtonToggle("Debug", showDebugMenu);
+			ButtonToggle("ImGui Demo", showDemoMenu);
 
-			Checkbox("Controls", &showControlsMenu);
-			Checkbox("Replays", &showReplaysMenu);
-			Checkbox("Debug", &showDebugMenu);
-			Checkbox("ImGui Demo", &showDemoMenu);
-
-			ImGui::EndMainMenuBar();
+			EndMainMenuBar();
 			
 			if (showControlsMenu) DrawControls();
 			if (showReplaysMenu) DrawRecordingsMenu();
 			if (showDebugMenu) DrawDebugMenu();
 			if (showDemoMenu) ShowDemoWindow();
 		}
+		else
+			GetIO().MouseDrawCursor = false;
+
 
 		DrawIndicators();
 
@@ -96,7 +100,6 @@ namespace userinterface
 			{
 				global::viewcmd = true;
 				{
-					Text("createcmdcount %i", global::createcmdcount);
 					Text("servertime %i", global::cmd.servertime);
 					Text("buttons %i", global::cmd.buttons);
 					Text("viewangles0 %i", global::cmd.viewangles[0]);
@@ -172,12 +175,15 @@ namespace userinterface
 		{
 			for (recorder::Recording& recording : recorder::recordings)
 			{
-
-				if (TreeNode(std::format("{}###mem{}", recording.name, recording.uuid).c_str()))
+				if (TreeNode(std::format("%s###mem{}", recording.uuid).c_str(), recording.name))
 				{
+					InputText(std::format("###memname{}", recording.uuid).c_str(), recording.name, 63);
+					
 					Text("uuid : %llu", recording.uuid);
 					Text("cmds : %lu", recording.cmds.size());
+					Text("data @ %lu", recording.onDiskOffset);
 					Text("disk : %s", recording.onDisk ? "true" : "false");
+					
 					if (replayer::selectedRecordingIndex != idx)
 					{
 						if (Button("Select"))
@@ -198,8 +204,7 @@ namespace userinterface
 					{
 						if (Button("Delete from Disk"))
 						{
-							savefile::DeleteRecordingOnDisk(recording.onDiskOffset);
-							recording.onDisk = false;
+							savefile::DeleteRecordingOnDisk(recording.uuid);
 						}
 					}
 
@@ -223,14 +228,17 @@ namespace userinterface
 				{
 					Text("uuid : %llu", disk.uuid);
 					Text("cmds : %lu", disk.cmdCount);
-					Text("file @ %lu", disk.offset);
-
+					Text("data @ %lu", disk.offset);
+					Text("used : %s", disk.inUse ? "True" : "False");
+					Text("frag : %lu", disk.fragmentCmdCap);
+					
 					if (Button("Load"))
-						savefile::LoadRecordingFromDisk(disk.offset);
+					{
+						savefile::LoadRecordingFromDisk(disk.uuid);
+					}
 					if (Button("Delete"))
 					{
-						savefile::DeleteRecordingOnDisk(disk.offset);
-						disk.inUse = false;
+						savefile::DeleteRecordingOnDisk(disk.uuid);
 					}
 
 					TreePop();
@@ -248,6 +256,31 @@ namespace userinterface
 			Begin("Debug Controls");
 
 			Checkbox("Debug prints", &global::debugPrints);
+
+			auto& diskRecordings = savefile::PeekSavedRecordings();
+
+			for (auto& disk : diskRecordings)
+			{
+				if (TreeNode(std::format("{}###disk{}", disk.name, disk.uuid).c_str()))
+				{
+					Text("uuid : %llu", disk.uuid);
+					Text("cmds : %lu", disk.cmdCount);
+					Text("data @ %lu", disk.offset);
+					Text("used : %s", disk.inUse ? "True" : "False");
+					Text("frag : %lu", disk.fragmentCmdCap);
+
+					if (Button("Load"))
+					{
+						savefile::LoadRecordingFromDisk(disk.uuid);
+					}
+					if (Button("Delete"))
+					{
+						savefile::DeleteRecordingOnDisk(disk.uuid);
+					}
+
+					TreePop();
+				}
+			}
 
 			End();
 		}
@@ -326,5 +359,25 @@ namespace userinterface
 		ImGui::SetCursorPosY((ImGui::GetWindowSize().y - ImGui::CalcTextSize(text.c_str()).y) * 0.5f);
 		ImGui::TextWrapped(text.c_str());
 		ImGui::PopTextWrapPos();
+	}
+
+	void ButtonToggle(const char* label, bool& v)
+	{
+		using namespace ImGui;
+
+		if (v == false)
+		{
+			PushStyleColor(ImGuiCol_Button, ImColor(50, 50, 60, 80).Value);
+			PushStyleColor(ImGuiCol_ButtonHovered, ImColor(60, 60, 70, 200).Value);
+			PushStyleColor(ImGuiCol_ButtonActive, ImColor(65, 65, 75, 255).Value);
+			if (Button(label))
+			{
+				v = !v;
+			}
+			PopStyleColor(3);
+		}
+		else
+			if (Button(label))
+				v = !v;
 	}
 }

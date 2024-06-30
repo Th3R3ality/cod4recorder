@@ -32,13 +32,13 @@ namespace hooks
 	void Init()
 	{
 		MH_Initialize();
+		d3dVMT = **(unsigned long**)(global::baseAddress + d3dids::device.offset);
 
 		//printf("hooking CL_Frame : %s\n", MH_StatusToString(Hook(funcids::CL_Frame.offset, CL_Frame, &orig_CL_Frame)));
 		printf("hooking CL_CreateCmd : %s\n",
 			MH_StatusToString(
 				Hook(funcids::CL_CreateCmd.offset, CL_CreateCmd, &orig_CL_CreateCmd)));
 
-		d3dVMT = **(unsigned long**)(global::baseAddress + d3dids::device.offset);
 
 		orig_EndScene = VMTEntryHook(d3dVMT, d3dindex::end_scene, (uintptr_t)EndScene);
 		printf("hooking EndScene : %x\n", orig_EndScene);

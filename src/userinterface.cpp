@@ -153,7 +153,7 @@ namespace userinterface
 						replayer::autoReplay = false;
 						replayer::isReplaying = false;
 						global::wantsReplay = false;
-						replayer::replayIndex = 0;
+						replayer::recordingIndex = 0;
 					}
 				}
 			}
@@ -302,7 +302,7 @@ namespace userinterface
 			else if (replayer::isReplaying)
 			{
 				std::string text = std::format("[- {} / {} -]",
-					replayer::replayIndex + 1,
+					replayer::recordingIndex + 1,
 					recorder::recordings.at(replayer::selectedRecordingIndex).cmds.size());
 				DrawIndicator(ImVec2(clientRect.right / 2 - defaultSize.x / 2, (clientRect.bottom * 3) / 4), defaultSize, text);
 			}

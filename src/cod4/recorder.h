@@ -1,18 +1,34 @@
 #pragma once
 #include <vector>
+#include <array>
 #include <string>
 #include <random>
+#include "types/usercmd.h"
 
 namespace recorder
 {
 	struct Smallcmd
 	{
-		int servertime;
-		int buttons;
-		int viewangles[2];
-		char forwardmove;
-		char sidemove;
-		unsigned short nextFps;
+		int servertime = 0;
+		int buttons = 0;
+		std::array<int, 2> viewangles = {0, 0};
+		char forwardmove = 0;
+		char sidemove = 0;
+		unsigned short nextFps = 0;
+
+		Smallcmd() = default;
+		Smallcmd(const Smallcmd&) = default;
+		Smallcmd(Smallcmd&&) = default;
+
+		explicit Smallcmd(const usercmd_t* cmd) :
+			servertime(cmd->servertime),
+			buttons(cmd->buttons),
+			forwardmove(cmd->forwardmove),
+			sidemove(cmd->sidemove)
+		{
+			viewangles[0] = cmd->viewangles[0];
+			viewangles[1] = cmd->viewangles[1];
+		}
 	};
 	
 	struct Recording
@@ -30,7 +46,7 @@ namespace recorder
 			this->name[sizeof(this->name) - 1] = '\0';
 		}
 
-		Recording(std::string name)
+		explicit(false) Recording(std::string name)
 			: uuid(0)
 		{
 			strncpy_s<sizeof(this->name)>(this->name, name.data(), sizeof(this->name) - 1);
@@ -47,8 +63,9 @@ namespace recorder
 	inline std::vector<Recording> recordings = { };
 	inline int currentRecordingIndex = -1;
 	inline bool isRecording = false;
-
+	
 	void NewRecording();
 	void StopRecording();
 	void RecordingWasRemovedFromDisk(unsigned long long uuid);
+	void CaptureCommand(const usercmd_t* cmd);
 }

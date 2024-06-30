@@ -9,21 +9,24 @@
 
 // cuck macro
 #define PUSHALL \
-__asm push eax \
-__asm push ebx \
-__asm push ecx \
-__asm push edx \
-__asm push esi \
-__asm push edi \
+__asm pushad
+
+//__asm push eax \
+//__asm push ebx \
+//__asm push ecx \
+//__asm push edx \
+//__asm push esi \
+//__asm push edi
 
 // cuck macro part 2
 #define POPALL \
-__asm pop edi \
-__asm pop esi \
-__asm pop edx \
-__asm pop ecx \
-__asm pop ebx \
-__asm pop eax 
+__asm popad
+//__asm pop edi \
+//__asm pop esi \
+//__asm pop edx \
+//__asm pop ecx \
+//__asm pop ebx \
+//__asm pop eax 
 
 
 namespace hooks

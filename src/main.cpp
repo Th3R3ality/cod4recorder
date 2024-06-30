@@ -36,29 +36,28 @@ DWORD WINAPI MainThread(HMODULE hModule)
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		
-		if (global::wantsRecord && !recorder::isRecording && !replayer::isReplaying)
+		if (global::wantsRecord && CanStartRecording())
 		{
 			recorder::NewRecording();
+			global::wantsRecord = false;
 		}
-		if (global::wantsReplay && !replayer::isReplaying && !recorder::isRecording)
+		if (global::wantsReplay && CanStartReplaying())
 		{
 			if (!replayer::autoReplay)
-				replayer::Play(userinterface::selectedRecordingIndex);
+			{
+				replayer::PlaySelectedRecording();
+				global::wantsReplay = false;
+			}
 			else
 			{
-				timing::Wait(SECOND * 0.5f);
+				timing::Wait(static_cast<long long>(SECOND * 0.5));
 				PostMessageA(global::window, WM_KEYDOWN, 'E', MapVirtualKey('E', MAPVK_VK_TO_VSC));
 				PostMessageA(global::window, WM_KEYUP, 'E', MapVirtualKey('E', MAPVK_VK_TO_VSC));
-				timing::Wait(SECOND * 0.25f);
+				timing::Wait(static_cast<long long>(SECOND * 0.25));
 
-				replayer::Play(userinterface::selectedRecordingIndex, false, true);
+				replayer::PlaySelectedRecording(false, true);
 			}
 		}
-		global::wantsRecord = false;
-		global::wantsReplay = false;
-
-		if (replayer::autoReplay)
-			global::wantsReplay = true;
 	}
 
 	hooks::Detach();

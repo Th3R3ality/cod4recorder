@@ -113,7 +113,7 @@
   <ItemGroup>
     <ClInclude Include="src\cod4\recorder.h" />
     <ClInclude Include="src\cod4\replayer.h" />
-    <ClInclude Include="src\cod4\helper.h" />
+    <ClInclude Include="src\helper.h" />
     <ClInclude Include="src\cod4\include.h" />
     <ClInclude Include="src\cod4\types\dvar.h" />
     <ClInclude Include="src\cod4\types\include.h" />

@@ -21,7 +21,6 @@ namespace savefile
 		{}
 	};
 
-	
 	enum SaveError
 	{
 		None = 0,

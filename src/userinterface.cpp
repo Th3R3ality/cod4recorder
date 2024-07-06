@@ -59,7 +59,6 @@ namespace userinterface
 		else
 			GetIO().MouseDrawCursor = false;
 
-
 		DrawIndicators();
 
 		EndFrame();
@@ -83,9 +82,12 @@ namespace userinterface
 		}
 
 		if (showMenu)
+		{
 			recorder::StopRecording();
+			if (replayer::isReplaying && !replayer::autoReplay)
+				replayer::Stop();
+		}
 	}
-
 
 	void DrawControls()
 	{
@@ -94,7 +96,7 @@ namespace userinterface
 		{
 			Begin("Controls");
 
-			Text("com_maxfps %i", GetDvar(dvarids::com_maxfps.offset)->current.integer);
+			Text("com_maxfps %i", GetDvar(dataid::dvar::com_maxfps.offset)->current.integer);
 
 			if (CollapsingHeader("cmd view"))
 			{
@@ -151,9 +153,7 @@ namespace userinterface
 					if (Button("Stop Auto Replay"))
 					{
 						replayer::autoReplay = false;
-						replayer::isReplaying = false;
-						global::wantsReplay = false;
-						replayer::recordingIndex = 0;
+						replayer::Stop();
 					}
 				}
 			}

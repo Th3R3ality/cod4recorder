@@ -43,6 +43,7 @@ namespace replayer
 	}
 	void Stop()
 	{
+		global::wantsReplay = false;
 		currentRecording = nullptr;
 		recordingIndex = 0;
 		isReplaying = false;
@@ -53,7 +54,7 @@ namespace replayer
 		if (currentRecording == nullptr)
 			return;
 
-		static dvar_t* const dvar_maxfps = GetDvar(dvarids::com_maxfps.offset);
+		static dvar_t* const dvar_maxfps = GetDvar(dataid::dvar::com_maxfps.offset);
 		static int startServertime = 0;
 		static int viewangle0offset = 0;
 		static int viewangle1offset = 0;

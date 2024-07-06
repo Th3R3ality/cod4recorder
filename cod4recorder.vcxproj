@@ -111,8 +111,34 @@
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\cod4\enums\actionslottype.h" />
+    <ClInclude Include="src\cod4\enums\he_type.h" />
+    <ClInclude Include="src\cod4\enums\objectivestate.h" />
+    <ClInclude Include="src\cod4\enums\offhandsecondaryclass.h" />
+    <ClInclude Include="src\cod4\enums\stancestate.h" />
+    <ClInclude Include="src\cod4\enums\team.h" />
+    <ClInclude Include="src\cod4\enums\tr_type.h" />
+    <ClInclude Include="src\cod4\enums\viewlocktypes.h" />
+    <ClInclude Include="src\cod4\globaldatapointers.h" />
     <ClInclude Include="src\cod4\recorder.h" />
     <ClInclude Include="src\cod4\replayer.h" />
+    <ClInclude Include="src\cod4\types\clientarchivedata.h" />
+    <ClInclude Include="src\cod4\types\clientstate.h" />
+    <ClInclude Include="src\cod4\types\entitystate.h" />
+    <ClInclude Include="src\cod4\types\gamestate.h" />
+    <ClInclude Include="src\cod4\types\hud.h" />
+    <ClInclude Include="src\cod4\types\actionslotparam.h" />
+    <ClInclude Include="src\cod4\types\clientactive.h" />
+    <ClInclude Include="src\cod4\types\clsnapshot.h" />
+    <ClInclude Include="src\cod4\types\hudelem.h" />
+    <ClInclude Include="src\cod4\types\hudelem_color.h" />
+    <ClInclude Include="src\cod4\types\lerpentitystate.h" />
+    <ClInclude Include="src\cod4\types\mantlestate.h" />
+    <ClInclude Include="src\cod4\types\objective.h" />
+    <ClInclude Include="src\cod4\types\outpacket.h" />
+    <ClInclude Include="src\cod4\types\playerState.h" />
+    <ClInclude Include="src\cod4\types\sprintstate.h" />
+    <ClInclude Include="src\cod4\types\trajectory.h" />
     <ClInclude Include="src\helper.h" />
     <ClInclude Include="src\cod4\include.h" />
     <ClInclude Include="src\cod4\types\dvar.h" />

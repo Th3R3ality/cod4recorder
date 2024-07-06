@@ -53,7 +53,7 @@ namespace recorder
 	}
 	void CaptureCommand(const usercmd_t* cmd)
 	{
-		static const dvar_t* dvar_maxfps = GetDvar(dvarids::com_maxfps.offset);
+		static const dvar_t* dvar_maxfps = GetDvar(dataid::dvar::com_maxfps.offset);
 		static int startServertime = 0;
 		static unsigned short lastFps = 0;
 

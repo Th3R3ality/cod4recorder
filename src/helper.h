@@ -18,3 +18,8 @@ inline bool CanStartReplaying()
 {
 	return !replayer::isReplaying && !recorder::isRecording;
 }
+
+inline float Magnitude(const float vec[3])
+{
+	return std::sqrtf(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
+}

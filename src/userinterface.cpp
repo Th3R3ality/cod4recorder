@@ -28,6 +28,7 @@ namespace userinterface
 
 	bool showControlsMenu = true;
 	bool showReplaysMenu = true;
+	bool showSpeedGraph = false;
 	bool showDebugMenu = false;
 	bool showDemoMenu = false;
 
@@ -46,6 +47,7 @@ namespace userinterface
 			
 			ButtonToggle("Controls", showControlsMenu);
 			ButtonToggle("Replays", showReplaysMenu);
+			ButtonToggle("Speed Graph", showSpeedGraph);
 			ButtonToggle("Debug", showDebugMenu);
 			ButtonToggle("ImGui Demo", showDemoMenu);
 
@@ -291,8 +293,42 @@ namespace userinterface
 		using namespace ImGui;
 		RECT clientRect;
 		GetClientRect(global::window, &clientRect);
-		ImVec2 defaultSize = ImVec2(160, 60);
+		auto defaultSize = ImVec2(160, 60);
 
+		//speed graph
+		if (showSpeedGraph)
+		{
+			static ImGuiWindowFlags flags =
+				ImGuiWindowFlags_NoResize |
+				ImGuiWindowFlags_NoMove |
+				ImGuiWindowFlags_NoInputs |
+				ImGuiWindowFlags_NoMouseInputs |
+				ImGuiWindowFlags_NoTitleBar;
+
+			ImVec2 size = defaultSize;
+			size.x *= 2;
+			size.y *= 2;
+			SetNextWindowSize(size);
+			SetNextWindowPos(ImVec2(clientRect.right / 2 - size.x / 2, (clientRect.bottom * 6) / 7));
+
+			PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+			Begin("SpeedGraphIndicator", 0, flags);
+			
+			static int speedLogIdx = 0;
+			static std::array<float, 128> speedLog = {};
+			
+			int currentSpeed = Magnitude(dataptr::client->cgameVelocity);
+
+			speedLog.at(speedLogIdx) = currentSpeed;
+			auto speedText = std::format("{}", currentSpeed);
+
+			speedLogIdx = (speedLogIdx + 1)% speedLog.size();
+			ImGui::PlotLines("", speedLog.data(), speedLog.size(), speedLogIdx, speedText.c_str(), 0.0f, 1000.0f, size);
+			End();
+			PopStyleVar();
+		}
+
+		// countdown indicators
 		{
 			if (userinterface::replayCountDown > 0)
 			{

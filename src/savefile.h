@@ -9,6 +9,8 @@ namespace savefile
 	{
 		char name[sizeof(recorder::Recording::name)] = {};
 		unsigned long long uuid = 0;
+		fvec3 startPos = {0.0f, 0.0f, 0.0f};
+		fvec2 startRot = {0.0f, 0.0f};
 		size_t offset = 0;
 		size_t cmdCount = 0;
 		size_t fragmentCmdCap = 0;
@@ -34,7 +36,7 @@ namespace savefile
 
 	void Init();
 	std::vector<DiskReplay>& PeekSavedRecordings();
-	SaveError SaveRecordingToDisk(int recordingIndex);
+	SaveError SaveRecordingToDisk(std::shared_ptr<recorder::Recording> recording);
 	SaveError DeleteRecordingOnDisk(unsigned long long uuid);
 	SaveError LoadRecordingFromDisk(unsigned long long uuid);
 	const char* GetErrorMessage(SaveError error);

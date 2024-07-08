@@ -74,21 +74,21 @@ namespace savefile
         return peek;
     }
 
-    SaveError SaveRecordingToDisk(int recordingIndex)
+    SaveError SaveRecordingToDisk(std::shared_ptr<recorder::Recording> recording)
     {
         if (!initialized) LOG_RET(SaveError::NotInitialized);
-        if (recordingIndex < 0 || recordingIndex >= recorder::recordings.size()) LOG_RET(SaveError::IndexOutOfRange);
+        //if (recordingIndex < 0 || recordingIndex >= recorder::_recordings.size()) LOG_RET(SaveError::IndexOutOfRange);
 
         if (dirtyPeek)
             PeekSavedRecordings();
 
-        recorder::Recording& recording = recorder::recordings.at(recordingIndex);
-        if (recording.onDisk) LOG_RET(SaveError::RecordingAlreadyOnDisk);
+        //recorder::Recording& recording = recorder::_recordings.at(recordingIndex);
+        if (recording->onDisk) LOG_RET(SaveError::RecordingAlreadyOnDisk);
 
         std::fstream f(savefilePath, std::ios::binary | std::ios::in | std::ios::out);
         if (f.bad()) LOG_RET(SaveError::BadFile);
 
-        size_t cmdCount = recording.cmds.size();
+        size_t cmdCount = recording->cmds.size();
         for (auto& disk : peek)
         {
             if (disk.inUse)
@@ -98,37 +98,41 @@ namespace savefile
 
             disk.inUse = true;
             disk.cmdCount = cmdCount;
-            strncpy_s<sizeof(DiskReplay::name)>(disk.name, recording.name, sizeof(DiskReplay::name) - 1);
+            disk.startPos = recording->startPos;
+            disk.startRot = recording->startRot;
+            strncpy_s<sizeof(DiskReplay::name)>(disk.name, recording->name, sizeof(DiskReplay::name) - 1);
             disk.name[sizeof(DiskReplay::name)-1] = '\0';
-            disk.uuid = recording.uuid;
+            disk.uuid = recording->uuid;
 
             f.seekp(disk.offset, std::ios::beg);
             f.write((char*)&disk, sizeof(disk));
-            f.write((char*)recording.cmds.data(), cmdCount * sizeof(recorder::Smallcmd));
+            f.write((char*)recording->cmds.data(), cmdCount * sizeof(recorder::Smallcmd));
 
-            recording.onDisk = true;
-            recording.onDiskOffset = disk.offset;
+            recording->onDisk = true;
+            recording->onDiskOffset = disk.offset;
 
             //dirtyPeek = true;
             LOG_RET(SaveError::None);
         }
 
         DiskReplay disk;
-        strncpy_s<sizeof(DiskReplay::name)>(disk.name, recording.name, sizeof(DiskReplay::name) - 1);
+        strncpy_s<sizeof(DiskReplay::name)>(disk.name, recording->name, sizeof(DiskReplay::name) - 1);
         disk.name[sizeof(DiskReplay::name) - 1] = '\0';
-        disk.uuid = recording.uuid;
+        disk.uuid = recording->uuid;
         disk.inUse = true;
-        disk.cmdCount = recording.cmds.size();
+        disk.cmdCount = recording->cmds.size();
+        disk.startPos = recording->startPos;
+        disk.startRot = recording->startRot;
         disk.fragmentCmdCap = cmdCount;
 
         f.seekp(0, std::ios::end);
         disk.offset = f.tellp();
         printf("saving recording @ %i\n", disk.offset);
         f.write((char*)&disk, sizeof(disk));
-        f.write((char*)recording.cmds.data(), disk.cmdCount * sizeof(recorder::Smallcmd));
+        f.write((char*)recording->cmds.data(), disk.cmdCount * sizeof(recorder::Smallcmd));
 
-        recording.onDisk = true;
-        recording.onDiskOffset = disk.offset;
+        recording->onDisk = true;
+        recording->onDiskOffset = disk.offset;
 
         peek.push_back(disk);
         //dirtyPeek = true;
@@ -182,12 +186,12 @@ namespace savefile
                 continue;
             foundOnDisk = true;
 
-            recorder::Recording rec(disk.name, disk.uuid);
-            rec.onDisk = true;
-            rec.onDiskOffset = disk.offset;
-            rec.cmds.resize(disk.cmdCount);
+            auto rec = std::make_shared<recorder::Recording>(disk.name, disk.uuid);
+            rec->onDisk = true;
+            rec->onDiskOffset = disk.offset;
+            rec->cmds.resize(disk.cmdCount);
             f.seekg(disk.offset + sizeof(DiskReplay), std::ios::beg);
-            f.read((char*)rec.cmds.data(), disk.cmdCount * sizeof(recorder::Smallcmd));
+            f.read((char*)rec->cmds.data(), disk.cmdCount * sizeof(recorder::Smallcmd));
 
             recorder::recordings.push_back(rec);
             break;

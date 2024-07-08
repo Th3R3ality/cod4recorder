@@ -10,7 +10,7 @@ struct clSnapshot_t
 	int deltaNum;
 	int ping;
 	int cmdNum;
-	playerState_s ps; // complete information about the current player at this time
+	playerState_t ps; // complete information about the current player at this time
 	int numEntities;
 	int numClients;
 	int parseEntitiesNum;

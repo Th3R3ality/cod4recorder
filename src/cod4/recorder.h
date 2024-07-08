@@ -3,7 +3,9 @@
 #include <array>
 #include <string>
 #include <random>
+#include <memory>
 #include "types/usercmd.h"
+#include "../vec.h"
 
 namespace recorder
 {
@@ -17,8 +19,8 @@ namespace recorder
 		unsigned short nextFps = 0;
 
 		Smallcmd() = default;
-		Smallcmd(const Smallcmd&) = default;
-		Smallcmd(Smallcmd&&) = default;
+		//Smallcmd(const Smallcmd&) = default;
+		//Smallcmd(Smallcmd&&) = default;
 
 		explicit Smallcmd(const usercmd_t* cmd) :
 			servertime(cmd->servertime),
@@ -35,6 +37,8 @@ namespace recorder
 	{
 		char name[64] = {};
 		unsigned long long uuid;
+		fvec3 startPos = {};
+		fvec2 startRot = {};
 		std::vector<Smallcmd> cmds = {};
 		size_t onDiskOffset = 0;
 		bool onDisk = false;
@@ -59,13 +63,25 @@ namespace recorder
 		}
 	};
 
-	inline unsigned int recordedCmds = 0;
-	inline std::vector<Recording> recordings = { };
-	inline int currentRecordingIndex = -1;
 	inline bool isRecording = false;
-	
+
+	inline std::vector<std::shared_ptr<Recording>> recordings = {};
+	inline std::shared_ptr<Recording> currentRecording = nullptr;
+
+	inline unsigned int currentSegmentStartIndex = 0;
+	inline std::vector<Smallcmd> currentSegment = {};
+
 	void NewRecording();
-	void StopRecording();
-	void RecordingWasRemovedFromDisk(unsigned long long uuid);
+	inline void SelectRecording(std::shared_ptr<Recording> rec) { currentRecording = rec; };
+	void StartRecordingSegment(unsigned int segmentStartIndex = 0, int recordingStartServertime = 0);
+	void StopRecordingSegment();
+	void SaveSegmentToCurrentRecording();
+	void DiscardSegment();
+	
+	void WantNewSegment(bool isFirstSegment = false);
+	bool WantsToRecord();
+	bool CanStartRecording();
+
 	void CaptureCommand(const usercmd_t* cmd);
+	void RecordingWasRemovedFromDisk(unsigned long long uuid);
 }

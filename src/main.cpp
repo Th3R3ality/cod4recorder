@@ -36,17 +36,15 @@ DWORD WINAPI MainThread(HMODULE hModule)
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		
-		if (global::wantsRecord && CanStartRecording())
+		if (recorder::WantsToRecord() && recorder::CanStartRecording())
 		{
-			recorder::NewRecording();
-			global::wantsRecord = false;
+			recorder::StartRecordingSegment();
 		}
-		if (global::wantsReplay && CanStartReplaying())
+		if (replayer::WantsToReplay() && replayer::CanStartReplaying())
 		{
 			if (!replayer::autoReplay)
 			{
 				replayer::PlaySelectedRecording();
-				global::wantsReplay = false;
 			}
 			else
 			{

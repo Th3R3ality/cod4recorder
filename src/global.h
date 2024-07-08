@@ -10,7 +10,5 @@ namespace global
 	inline DWORD baseAddress = 0x0;
 	inline HWND window = NULL;
 	inline bool wantsQuit = false;
-	inline bool wantsReplay = false;
-	inline bool wantsRecord = false;
 	inline bool debugPrints = false;
 }

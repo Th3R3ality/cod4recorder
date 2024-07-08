@@ -5,14 +5,16 @@
 #include "../timing.h"
 #include "../helper.h"
 #include "dataid.h"
+#include "angles.h"
 
 namespace replayer
 {
-	recorder::Recording* currentRecording = nullptr;
+	bool wantsToReplay = false;
+	std::shared_ptr<recorder::Recording> currentRecording = nullptr;
 
 	void PlaySelectedRecording(bool autoHideMenu, bool skipDelay)
 	{
-		currentRecording = &recorder::recordings.at(selectedRecordingIndex);
+		currentRecording = recorder::currentRecording;
 
 		if (!skipDelay)
 		{
@@ -32,21 +34,33 @@ namespace replayer
 		if (autoHideMenu)
 			userinterface::showMenu = false;
 
+		wantsToReplay = false;
 		isReplaying = true;
 	}
-	void SelectRecordingByIndex(int index)
+	void Stop(usercmd_t* const cmd)
 	{
-		if (!(index > -1 && index < recorder::recordings.size()))
-			return;
-
-		selectedRecordingIndex = index;
-	}
-	void Stop()
-	{
-		global::wantsReplay = false;
 		currentRecording = nullptr;
-		recordingIndex = 0;
 		isReplaying = false;
+
+		if (cmd != nullptr && recorder::WantsToRecord())
+		{
+			recorder::StartRecordingSegment(recordingIndex, replayer::startServertime);
+			recorder::CaptureCommand(cmd);
+		}
+
+		replayer::startServertime = 0;
+		recordingIndex = 0;
+	}
+
+	void WantReplay(bool repeating)
+	{
+		wantsToReplay = true;
+		autoReplay = repeating;
+	}
+
+	bool WantsToReplay()
+	{
+		return wantsToReplay || (autoReplay && !isReplaying);
 	}
 
 	void ModifyNextCommand(usercmd_t* const cmd)
@@ -55,24 +69,31 @@ namespace replayer
 			return;
 
 		static dvar_t* const dvar_maxfps = GetDvar(dataid::dvar::com_maxfps.offset);
-		static int startServertime = 0;
 		static int viewangle0offset = 0;
 		static int viewangle1offset = 0;
 
 		if (cmd->forwardmove != 0 || cmd->sidemove != 0)
 		{
-			return replayer::Stop();
+			return replayer::Stop(cmd);
 		}
-
 		if (replayer::recordingIndex >= currentRecording->cmds.size())
 		{
-			return replayer::Stop();
+			return replayer::Stop(cmd);
 		}
-		auto& smallcmd = currentRecording->cmds.at(replayer::recordingIndex);
 
+		auto& smallcmd = currentRecording->cmds.at(replayer::recordingIndex);
 		if (replayer::recordingIndex == 0)
 		{
 			startServertime = cmd->servertime;
+
+			fvec2 deltaRot = GetViewDeltaToDirection(currentRecording->startRot);
+
+			dataptr::client->viewangles[0] += deltaRot.x;
+			dataptr::client->viewangles[1] += deltaRot.y;
+
+			cmd->viewangles[0] += ANGLE2SHORT(deltaRot.x);
+			cmd->viewangles[1] += ANGLE2SHORT(deltaRot.y);
+
 			viewangle0offset = smallcmd.viewangles[0] - cmd->viewangles[0];
 			viewangle1offset = smallcmd.viewangles[1] - cmd->viewangles[1];
 		}

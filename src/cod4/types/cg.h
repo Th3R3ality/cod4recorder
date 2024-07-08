@@ -1,0 +1,182 @@
+#pragma once
+#include "../enums/demotype.h"
+#include "../enums/cubemapshot.h"
+#include "snapshot.h"
+#include "playerstate.h"
+#include "centity.h"
+#include "playerentity.h"
+#include "refdef.h"
+#include "score.h"
+#include "../enums/invalidcmdhinttype.h"
+#include "viewdamage.h"
+#include "shellshock.h"
+#include "$F6DFD6D87F75480A1EF1906639406DF5.h"
+#include "visionsetvars.h"
+#include "visionsetlerpstyle.h"
+#include "$BE9F66374A020A9809EEAF403416A176.h"
+#include "hudelemsoundinfo.h"
+struct cg_t
+{
+	int clientNum;
+	int localClientNum;
+	DemoType demoType;
+	CubemapShot cubemapShot;
+	int cubemapSize;
+	int renderScreen;
+	int latestSnapshotNum;
+	int latestSnapshotTime;
+	snapshot_t* snap;
+	snapshot_t* nextSnap;
+	snapshot_t activeSnapshots[2];
+	float frameInterpolation;
+	int frametime;
+	int time;
+	int oldTime;
+	int physicsTime;
+	int mapRestart;
+	int renderingThirdPerson;
+	playerState_t predictedPlayerState;
+	centity_t predictedPlayerEntity;
+	playerEntity_t playerEntity;
+	int predictedErrorTime;
+	float predictedError[3];
+	float landChange;
+	int landTime;
+	float heightToCeiling;
+	refdef_t refdef;
+	float refdefViewAngles[3];
+	float lastVieworg[3];
+	float swayViewAngles[3];
+	float swayAngles[3];
+	float swayOffset[3];
+	int iEntityLastType[1024];
+	void* pEntityLastXModel[1024]; // XModel*
+	float zoomSensitivity;
+	bool isLoading;
+	char objectiveText[1024];
+	char scriptMainMenu[256];
+	int scoresRequestTime;
+	int numScores;
+	int teamScores[4];
+	int teamPings[4];
+	int teamPlayers[4];
+	score_t scores[64];
+	int scoreLimit;
+	int showScores;
+	int scoreFadeTime;
+	int scoresTop;
+	int scoresOffBottom;
+	int scoresBottom;
+	int drawHud;
+	int crosshairClientNum;
+	int crosshairClientLastTime;
+	int crosshairClientStartTime;
+	int identifyClientNum;
+	int cursorHintIcon;
+	int cursorHintTime;
+	int cursorHintFade;
+	int cursorHintString;
+	int lastClipFlashTime;
+	InvalidCmdHintType invalidCmdHintType;
+	int invalidCmdHintTime;
+	int lastHealthPulseTime;
+	int lastHealthLerpDelay;
+	int lastHealthClient;
+	float lastHealth;
+	float healthOverlayFromAlpha;
+	float healthOverlayToAlpha;
+	int healthOverlayPulseTime;
+	int healthOverlayPulseDuration;
+	int healthOverlayPulsePhase;
+	bool healthOverlayHurt;
+	int healthOverlayLastHitTime;
+	float healthOverlayOldHealth;
+	int healthOverlayPulseIndex;
+	int proneBlockedEndTime;
+	int lastStance;
+	int lastStanceChangeTime;
+	int lastStanceFlashTime;
+	int voiceTime;
+	unsigned int weaponSelect;
+	int weaponSelectTime;
+	unsigned int weaponLatestPrimaryIdx;
+	int prevViewmodelWeapon;
+	int equippedOffHand;
+	viewDamage_t viewDamage[8];
+	int damageTime;
+	float damageX;
+	float damageY;
+	float damageValue;
+	float viewFade;
+	int weapIdleTime;
+	int nomarks;
+	int v_dmg_time;
+	float v_dmg_pitch;
+	float v_dmg_roll;
+	float fBobCycle;
+	float xyspeed;
+	float kickAVel[3];
+	float kickAngles[3];
+	float offsetAngles[3];
+	float gunPitch;
+	float gunYaw;
+	float gunXOfs;
+	float gunYOfs;
+	float gunZOfs;
+	float vGunOffset[3];
+	float vGunSpeed[3];
+	float viewModelAxis[4][3];
+	float rumbleScale;
+	float compassNorthYaw;
+	float compassNorth[2];
+	Material* compassMapMaterial;
+	float compassMapUpperLeft[2];
+	float compassMapWorldSize[2];
+	int compassFadeTime;
+	int healthFadeTime;
+	int ammoFadeTime;
+	int stanceFadeTime;
+	int sprintFadeTime;
+	int offhandFadeTime;
+	int offhandFlashTime;
+	shellshock_t shellshock;
+	$F6DFD6D87F75480A1EF1906639406DF5 testShock;
+	int holdBreathTime;
+	int holdBreathInTime;
+	int holdBreathDelay;
+	float holdBreathFrac;
+	float radarProgress;		// correct offset
+	float selectedLocation[2];
+	SprintState sprintStates;	// 5 ints
+
+	//int packetAnalysisFrameCount;
+	//char bitsSent[100][13];
+	//int entBitsUsed[10][18];
+	//int numEntsSent[10][18];
+	//int numEntFields[10][18]; ?? // 7 inbetween selectedLocation and bgs
+	//int numSnapshots;
+	//int adsViewErrorDone;
+	//int inKillCam;
+
+	int _unk01;
+	int _unk02;
+
+	char bgs[711944];	// bgs_t // first name root
+	cpose_t viewModelPose;
+	visionSetVars_t visionSetPreLoaded[4];
+	char visionSetPreLoadedName[4][64];
+	visionSetVars_t visionSetFrom[2];
+	visionSetVars_t visionSetTo[2];
+	visionSetVars_t visionSetCurrent[2];
+	visionSetLerpData_t visionSetLerpData[2];
+	char visionNameNaked[64];
+	char visionNameNight[64];
+	int extraButtons;
+	int lastActionSlotTime;
+	bool playerTeleported;
+	int stepViewStart;
+	float stepViewChange;
+	$BE9F66374A020A9809EEAF403416A176 lastFrame;
+	hudElemSoundInfo_t hudElemSound[32];
+	int vehicleFrame;
+}; // should be right

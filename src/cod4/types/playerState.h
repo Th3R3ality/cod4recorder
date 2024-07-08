@@ -12,7 +12,7 @@
 // to predict player motion and actions
 // nothing outside of pmove should modify these, or some degree of prediction error
 // will occur
-struct playerState_s
+struct playerState_t
 {
 	int commandTime;
 	int pm_type;

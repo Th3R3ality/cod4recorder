@@ -41,10 +41,8 @@ __declspec(naked) usercmd_t* hooks::CL_CreateCmd(usercmd_t* cmd, int localClient
 		
 		PUSHALL
 	}
-
 	
 	logic(cmd, localClientNum);
-	
 
 	__asm {
 		POPALL

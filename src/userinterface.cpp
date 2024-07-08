@@ -10,15 +10,34 @@
 
 #include <string>
 #include <format>
+#include "cod4/angles.h"
 
-#define PUSHGREYBTN \
+#define PUSHGREYBTN(x) \
 PushStyleColor(ImGuiCol_Button, ImColor(50, 200, 100, 80).Value); \
 PushStyleColor(ImGuiCol_ButtonHovered, ImColor(50, 190, 110, 200).Value); \
-PushStyleColor(ImGuiCol_ButtonActive, ImColor(50, 200, 150, 255).Value);
+PushStyleColor(ImGuiCol_ButtonActive, ImColor(50, 200, 150, 255).Value); \
+x \
+PopStyleColor(3);
+
+#define PUSHGREENBTN(x) \
+PushStyleColor(ImGuiCol_Button, ImColor(50, 200, 100, 80).Value); \
+PushStyleColor(ImGuiCol_ButtonHovered, ImColor(50, 190, 110, 200).Value); \
+PushStyleColor(ImGuiCol_ButtonActive, ImColor(50, 200, 150, 255).Value); \
+x \
+PopStyleColor(3);
+
+#define PUSHREDBTN(x) \
+PushStyleColor(ImGuiCol_Button, ImColor(200, 50, 50, 80).Value); \
+PushStyleColor(ImGuiCol_ButtonHovered, ImColor(190, 50, 60, 200).Value); \
+PushStyleColor(ImGuiCol_ButtonActive, ImColor(200, 50, 100, 255).Value); \
+x \
+PopStyleColor(3);
+
+
 
 namespace userinterface
 {
-	void DrawControls();
+	void DrawCurrentRecordingMenu();
 	void DrawRecordingsMenu();
 	void DrawDebugMenu();
 	void DrawIndicators();
@@ -26,7 +45,7 @@ namespace userinterface
 	void TextCentered(std::string text);
 	void ButtonToggle(const char* label, bool& v);
 
-	bool showControlsMenu = true;
+	bool showCurrentRecordingMenu = true;
 	bool showReplaysMenu = true;
 	bool showSpeedGraph = false;
 	bool showDebugMenu = false;
@@ -45,7 +64,7 @@ namespace userinterface
 
 			BeginMainMenuBar();
 			
-			ButtonToggle("Controls", showControlsMenu);
+			ButtonToggle("Current Recording", showCurrentRecordingMenu);
 			ButtonToggle("Replays", showReplaysMenu);
 			ButtonToggle("Speed Graph", showSpeedGraph);
 			ButtonToggle("Debug", showDebugMenu);
@@ -53,7 +72,7 @@ namespace userinterface
 
 			EndMainMenuBar();
 			
-			if (showControlsMenu) DrawControls();
+			if (showCurrentRecordingMenu) DrawCurrentRecordingMenu();
 			if (showReplaysMenu) DrawRecordingsMenu();
 			if (showDebugMenu) DrawDebugMenu();
 			if (showDemoMenu) ShowDemoWindow();
@@ -83,87 +102,145 @@ namespace userinterface
 			break;
 		}
 
+
+		//static auto in_mouse = GetDvar(dataid::dvar::in_mouse.offset);
+
+		//if (in_mouse != nullptr)
+		//{
+		//	in_mouse->current.enabled = showMenu ? 0 : 1;
+		//	in_mouse->latched.enabled = showMenu ? 0 : 1;
+		//	in_mouse->modified = 0;
+
+		//	using restart_input_fn = void (*)();
+		//	((restart_input_fn)(dataid::func::restart_input.addr))();
+		//	auto& mouse = *(uint8_t*)dataid::boolean::mouse_enabled.addr;
+		//	mouse = in_mouse->current.enabled;
+		//}
+
 		if (showMenu)
 		{
-			recorder::StopRecording();
+			recorder::StopRecordingSegment();
 			if (replayer::isReplaying && !replayer::autoReplay)
 				replayer::Stop();
 		}
 	}
 
-	void DrawControls()
+	void DrawCurrentRecordingMenu()
 	{
 		using namespace ImGui;
 
 		{
-			Begin("Controls");
+			Begin("Current Recording");
 
-			Text("com_maxfps %i", GetDvar(dataid::dvar::com_maxfps.offset)->current.integer);
+			static float height = CalcTextSize("A").y + 3 * 2/*frame padding * 2*/;
+			float width = GetContentRegionAvailWidth();
+			auto btnSize = ImVec2(width, height);
 
-			if (CollapsingHeader("cmd view"))
+			PushItemWidth(width);
+			if (recorder::currentRecording == nullptr)
 			{
-				global::viewcmd = true;
+				if (Button("New Recording", btnSize))
 				{
-					Text("servertime %i", global::cmd.servertime);
-					Text("buttons %i", global::cmd.buttons);
-					Text("viewangles0 %i", global::cmd.viewangles[0]);
-					Text("viewangles1 %i", global::cmd.viewangles[1]);
-					Text("viewangles2 %i", global::cmd.viewangles[2]);
-					Text("weaponIndex %i", global::cmd.weaponIndex);
-					Text("a1 %i", global::cmd.a1);
-					Text("forwardmove %i", global::cmd.forwardmove);
-					Text("sidemove %i", global::cmd.sidemove);
-					Text("i1 %i", global::cmd.i1);
-					Text("i2 %i", global::cmd.i2);
+					recorder::NewRecording();
+					//global::wantsRecord = true;
+					//userinterface::showMenu = false;
 				}
+				PopItemWidth();
+				End();
+				return;
 			}
-			else
-				global::viewcmd = false;
-
-			if (Button("New Recording"))
+			BeginTabBar("CurrentRecordingTab");
+			static bool skbidi = true;
+			if (!BeginTabItem(
+				std::format("{}###currentrectab{}",
+					recorder::currentRecording->name,
+					recorder::currentRecording->uuid).c_str(),
+				&skbidi))
 			{
-				global::wantsRecord = true;
-				userinterface::showMenu = false;
+				if (!skbidi)
+					recorder::currentRecording = nullptr;
+				skbidi = true;
+				EndTabBar();
+				PopItemWidth();
+				End();
+				return;
 			}
 
-			if (replayer::selectedRecordingIndex > -1 && replayer::selectedRecordingIndex < recorder::recordings.size())
-			{
-				PushStyleColor(ImGuiCol_Button, ImColor(50, 200, 100, 80).Value);
-				PushStyleColor(ImGuiCol_ButtonHovered, ImColor(50, 190, 110, 200).Value);
-				PushStyleColor(ImGuiCol_ButtonActive, ImColor(50, 200, 150, 255).Value);
-				if (Button("Replay"))
-				{
-					global::wantsReplay = true;
-				}
-				PopStyleColor(3);
+			InputText(std::format("###currentname{}", recorder::currentRecording->uuid).c_str(), recorder::currentRecording->name, 63);
 
-				if (!replayer::autoReplay)
+
+			if (recorder::currentSegment.size() == 0)
+			{
+				if (recorder::currentRecording->cmds.size() == 0)
 				{
-					PushStyleColor(ImGuiCol_Button, ImColor(50, 200, 100, 80).Value);
-					PushStyleColor(ImGuiCol_ButtonHovered, ImColor(50, 190, 110, 200).Value);
-					PushStyleColor(ImGuiCol_ButtonActive, ImColor(50, 200, 150, 255).Value);
-					if (Button("Auto Replay"))
+					if (Button("Start Recording", btnSize))
 					{
-						replayer::autoReplay = true;
-						ToggleMenu(-1);
+						recorder::WantNewSegment(true);
 					}
-					PopStyleColor(3);
-
+					NewLine();
 				}
 				else
 				{
-					if (Button("Stop Auto Replay"))
+					if (Button("New Segment", btnSize))
 					{
-						replayer::autoReplay = false;
-						replayer::Stop();
+						recorder::WantNewSegment(false);
 					}
+					HelpMarker(
+						"This will start replaying the current recording.\n"
+						"Begin moving to start the segment.\n"
+						"The segment will automatically begin if the end of the recording has been reached."
+					);
 				}
 			}
 			else
-				Button("No Replay Selected");
+			{
+				Text("current segment:");
+				Text("cmd : %u", recorder::currentSegment.size());
+				Text("idx : %u", recorder::currentSegmentStartIndex);
 
+				PUSHGREENBTN(
+				if (Button("Apply Segment", btnSize))
+				{
+					recorder::SaveSegmentToCurrentRecording();
+				});
+
+				PUSHREDBTN(
+				if (Button("Discard Segment", btnSize))
+				{
+					recorder::DiscardSegment();
+				});
+			}
+
+			NewLine();
+
+			PUSHGREENBTN(
+			if (Button("Replay", btnSize))
+			{
+				replayer::WantReplay();
+			})
+
+			if (!replayer::autoReplay)
+			{
+				PUSHGREENBTN(
+				if (Button("Auto Replay", btnSize))
+				{
+					replayer::WantReplay(true);
+					ToggleMenu(-1);
+				})
+			}
+			else
+			{
+				PUSHREDBTN(
+				if (Button("Stop Auto Replay", btnSize))
+				{
+					replayer::autoReplay = false;
+					replayer::Stop();
+				})
+			}
+			EndTabItem();
+			EndTabBar();
+			PopItemWidth();
 			End();
-
 		}
 	}
 
@@ -172,54 +249,53 @@ namespace userinterface
 		using namespace ImGui;
 		Begin("Recordings");
 
-		int idx = 0;
 		if (CollapsingHeader("Recordings in Memory"))
 		{
-			for (recorder::Recording& recording : recorder::recordings)
+			for (std::shared_ptr<recorder::Recording> recording : recorder::recordings)
 			{
-				if (TreeNode(std::format("%s###mem{}", recording.uuid).c_str(), recording.name))
+				if (TreeNode(std::format("%s###mem{}", recording->uuid).c_str(), recording->name))
 				{
-					InputText(std::format("###memname{}", recording.uuid).c_str(), recording.name, 63);
+					InputText(std::format("###memname{}", recording->uuid).c_str(), recording->name, 63);
 					
-					Text("uuid : %llu", recording.uuid);
-					Text("cmds : %lu", recording.cmds.size());
-					Text("data @ %lu", recording.onDiskOffset);
-					Text("disk : %s", recording.onDisk ? "true" : "false");
+					Text("uuid : %llu", recording->uuid);
+					Text("pos  : %f, %f, %f", recording->startPos.x, recording->startPos.y, recording->startPos.z);
+					Text("rot  : %f, %f", recording->startRot.x, recording->startRot.y);
+					Text("cmds : %lu", recording->cmds.size());
+					Text("data @ %lu", recording->onDiskOffset);
+					Text("disk : %s", recording->onDisk ? "true" : "false");
 					
-					if (replayer::selectedRecordingIndex != idx)
+					if (recorder::currentRecording != recording)
 					{
 						if (Button("Select"))
-							replayer::selectedRecordingIndex = idx;
+							recorder::currentRecording = recording;
 					}
 					else
 					{
 						if (Button("Deselect"))
-							replayer::selectedRecordingIndex = -1;
+							recorder::currentRecording = nullptr;
 					}
 
-					if (!recording.onDisk)
+					if (!recording->onDisk)
 					{
 						if (Button("Save to Disk"))
-							savefile::SaveRecordingToDisk(idx);
+							savefile::SaveRecordingToDisk(recording);
 					}
 					else
 					{
 						if (Button("Delete from Disk"))
 						{
-							savefile::DeleteRecordingOnDisk(recording.uuid);
+							savefile::DeleteRecordingOnDisk(recording->uuid);
 						}
 					}
 
 					TreePop();
 				}
-
-				idx++;
 			}
 		}
 
 		if (CollapsingHeader("Peek Recordings on Disk"))
 		{
-			auto& diskRecordings = savefile::PeekSavedRecordings();
+			/*auto& diskRecordings = savefile::PeekSavedRecordings();
 
 			for (auto& disk : diskRecordings)
 			{
@@ -245,7 +321,7 @@ namespace userinterface
 
 					TreePop();
 				}
-			}
+			}*/
 		}
 		End();
 	}
@@ -257,9 +333,68 @@ namespace userinterface
 		{
 			Begin("Debug Controls");
 
+			fvec2 deltaangles = { dataptr::cg->nextSnap->ps.delta_angles[0], dataptr::cg->nextSnap->ps.delta_angles[1] };
+			Text("nextSnap->ps.delta_angles");
+			Text("    %f, %f", deltaangles.x, deltaangles.y);
+
+			fvec2 viewangles = { dataptr::client->viewangles[0], dataptr::client->viewangles[1] };
+			Text("client->viewangles");
+			Text("    %f, %f", viewangles.x, viewangles.y);
+
+			fvec2 realangles = AngleNormalize180(viewangles + deltaangles);
+			Text("realangles");
+			Text("    %f, %f", realangles.x, realangles.y);
+
+			//fvec2 cmdangles = { SHORT2ANGLE(global::cmd.viewangles[0]), SHORT2ANGLE(global::cmd.viewangles[1])};
+			//Text("cmd angle");
+			//Text("    %f, %f", cmdangles.x, cmdangles.y);
+
+			//fvec2 deltas = AngleDelta(deltaangles, cmdangles);
+			//Text("deltas");
+			//Text("    %f, %f", deltas.x, deltas.y);
+
+			//fvec2 real_delta = AngleDelta(deltas, deltaangles);
+			//Text("real_delta");
+			//Text("    %f, %f", real_delta.x, real_delta.y);
+
+			//fvec2 test = { -AngleNormalize180(cmdangles.x), -AngleNormalize180(cmdangles.y) };
+			//Text("test");
+			//Text("    %f, %f", test.x, test.y);
+
+			//fvec2 final = AngleDelta(deltaangles, fvec2(0.f, 90.f));
+			//Text("final");
+			//Text("    %f, %f", final.x, final.y);
+
+			//fvec2 finaladd = test - final;
+			//Text("finaladd");
+			//Text("    %f, %f", finaladd.x, finaladd.y);
+
+
+			Text("com_maxfps %i", GetDvar(dataid::dvar::com_maxfps.offset)->current.integer);
+
+			if (CollapsingHeader("cmd view"))
+			{
+				global::viewcmd = true;
+				{
+					Text("servertime %i", global::cmd.servertime);
+					Text("buttons %i", global::cmd.buttons);
+					Text("viewangles0 %i", global::cmd.viewangles[0]);
+					Text("viewangles1 %i", global::cmd.viewangles[1]);
+					Text("viewangles2 %i", global::cmd.viewangles[2]);
+					Text("weaponIndex %i", global::cmd.weaponIndex);
+					Text("a1 %i", global::cmd.a1);
+					Text("forwardmove %i", global::cmd.forwardmove);
+					Text("sidemove %i", global::cmd.sidemove);
+					Text("i1 %i", global::cmd.i1);
+					Text("i2 %i", global::cmd.i2);
+				}
+			}
+			else
+				global::viewcmd = false;
+
 			Checkbox("Debug prints", &global::debugPrints);
 
-			auto& diskRecordings = savefile::PeekSavedRecordings();
+			/*auto& diskRecordings = savefile::PeekSavedRecordings();
 
 			for (auto& disk : diskRecordings)
 			{
@@ -282,7 +417,7 @@ namespace userinterface
 
 					TreePop();
 				}
-			}
+			}*/
 
 			End();
 		}
@@ -303,7 +438,8 @@ namespace userinterface
 				ImGuiWindowFlags_NoMove |
 				ImGuiWindowFlags_NoInputs |
 				ImGuiWindowFlags_NoMouseInputs |
-				ImGuiWindowFlags_NoTitleBar;
+				ImGuiWindowFlags_NoTitleBar |
+				ImGuiWindowFlags_NoBackground;
 
 			ImVec2 size = defaultSize;
 			size.x *= 2;
@@ -312,20 +448,25 @@ namespace userinterface
 			SetNextWindowPos(ImVec2(clientRect.right / 2 - size.x / 2, (clientRect.bottom * 6) / 7));
 
 			PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+			PushStyleVar(ImGuiStyleVar_FrameRounding, 10);
+			
+			PushStyleColor(ImGuiCol_FrameBg, ImColor(0,0,0,50).Value);
+			
 			Begin("SpeedGraphIndicator", 0, flags);
 			
 			static int speedLogIdx = 0;
 			static std::array<float, 128> speedLog = {};
 			
-			int currentSpeed = Magnitude(dataptr::client->cgameVelocity);
+			int currentSpeed = static_cast<int>(MagnitudeXY(dataptr::client->cgameVelocity));
 
-			speedLog.at(speedLogIdx) = currentSpeed;
+			speedLog.at(speedLogIdx) = static_cast<float>(currentSpeed);
 			auto speedText = std::format("{}", currentSpeed);
 
-			speedLogIdx = (speedLogIdx + 1)% speedLog.size();
-			ImGui::PlotLines("", speedLog.data(), speedLog.size(), speedLogIdx, speedText.c_str(), 0.0f, 1000.0f, size);
+			speedLogIdx = (speedLogIdx + 1) % speedLog.size();
+			ImGui::PlotLines("", speedLog.data(), speedLog.size(), speedLogIdx, speedText.c_str(), 0.0f, 700.0f, size);
 			End();
-			PopStyleVar();
+			PopStyleColor();
+			PopStyleVar(2);
 		}
 
 		// countdown indicators
@@ -339,9 +480,10 @@ namespace userinterface
 			{
 				std::string text = std::format("[- {} / {} -]",
 					replayer::recordingIndex + 1,
-					recorder::recordings.at(replayer::selectedRecordingIndex).cmds.size());
+					recorder::currentRecording->cmds.size());
 				DrawIndicator(ImVec2(clientRect.right / 2 - defaultSize.x / 2, (clientRect.bottom * 3) / 4), defaultSize, text);
 			}
+
 			if (userinterface::recordCountDown > 0)
 			{
 				std::string text = std::format("Recording in {}", userinterface::recordCountDown);
@@ -349,7 +491,7 @@ namespace userinterface
 			}
 			else if (recorder::isRecording)
 			{
-				std::string text = std::format("[+ {} +]", recorder::recordings.at(recorder::currentRecordingIndex).cmds.size());
+				std::string text = std::format("[+ {} +]", recorder::currentSegment.size());
 				DrawIndicator(ImVec2(clientRect.right / 2 - defaultSize.x / 2, (clientRect.bottom * 3) / 4), defaultSize, text);
 			}
 		}

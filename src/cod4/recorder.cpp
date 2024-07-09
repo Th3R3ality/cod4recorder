@@ -12,11 +12,11 @@
 namespace recorder
 {
 	bool wantsToRecord = false;
+	bool isNewRecording = true;
 
 	int startServertime = 0;
 	unsigned short lastFps = 0;
 	//bool isNewSegment = true;
-	bool isNewRecording = true;
 
 	void NewRecording()
 	{
@@ -52,6 +52,8 @@ namespace recorder
 			currentRecording->cmds.clear();
 			startServertime = 0;
 			isNewRecording = true;
+			waitingForStandstill = true;
+			waitingForMove = false;
 		}
 
 		if (recordingStartServertime != 0)
@@ -59,13 +61,17 @@ namespace recorder
 
 		lastFps = 0;
 		wantsToRecord = false;
+		userinterface::showMenu = false;
 		isRecording = true;
+		
 	}
 
 	void StopRecordingSegment()
 	{
 		//currentRecording = nullptr;
 		//currentRecordingIndex = -1;
+		waitingForStandstill = false;
+		waitingForMove = false;
 		isRecording = false;
 	}
 
@@ -83,9 +89,9 @@ namespace recorder
 		currentSegmentStartIndex = 0;
 	}
 
-	void WantNewSegment(bool isFirstSegment)
+	void WantNewSegment()
 	{
-		if (isFirstSegment)
+		if (currentRecording->cmds.size() == 0)
 			isNewRecording = true;
 		else
 		{
@@ -104,12 +110,33 @@ namespace recorder
 		return (!recorder::isRecording && isNewRecording && !replayer::isReplaying);
 	}
 
-	void CaptureCommand(const usercmd_t* const cmd)
+	void CaptureCommand(usercmd_t* const cmd)
 	{
 		static const dvar_t* dvar_maxfps = GetDvar(dataid::dvar::com_maxfps.offset);
 
 		if (isNewRecording)
 		{
+			if (waitingForStandstill) // nesting these for performance (only 1 if check per iteration)
+			{
+				if (Magnitude(dataptr::client->cgameVelocity) != 0)
+					return;
+				else
+				{
+					waitingForStandstill = false;
+					waitingForMove = true;
+				}
+			}
+			if (waitingForMove) // nesting these for performance (only 1 if check per iteration)
+			{
+				if (cmd->forwardmove || cmd->sidemove)
+				{
+					cmd->forwardmove = cmd->sidemove = 0;
+					waitingForMove = false;
+				}
+				
+				return;
+			}
+
 			currentRecording->startRot = GetRealAngles();
 			currentRecording->startPos = fvec3(dataptr::client->cgameOrigin);
 
@@ -117,7 +144,7 @@ namespace recorder
 			isNewRecording = false;
 		}
 
-		auto scmd = Smallcmd(cmd);
+		auto scmd = Smallcmd(cmd, GetRealCmdAngles(cmd));
 		scmd.servertime -= startServertime;
 		currentSegment.push_back(scmd);
 

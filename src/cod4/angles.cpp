@@ -30,16 +30,35 @@ float AngleDelta(float angle1, float angle2)
 
 fvec2 GetViewDeltaToDirection(fvec2 desiredDir)
 {
-	fvec2 deltaangles = { dataptr::cg->nextSnap->ps.delta_angles[0], dataptr::cg->nextSnap->ps.delta_angles[1] };
-	fvec2 viewangles = { dataptr::client->viewangles[0],dataptr::client->viewangles[1] };
+	fvec2 deltaangles = fvec2(dataptr::cg->nextSnap->ps.delta_angles);
+	fvec2 viewangles = fvec2(dataptr::client->viewangles);
 	fvec2 invertedNormViewangles = { -AngleNormalize180(viewangles.x), -AngleNormalize180(viewangles.y) };
 	fvec2 delta = AngleDelta(deltaangles, desiredDir);
+
 	return invertedNormViewangles - delta;
+}
+
+ivec2 GetViewDeltaToDirection(ivec2 desiredDir)
+{
+	fvec2 delta = GetViewDeltaToDirection(fvec2(SHORT2ANGLE(desiredDir.x), SHORT2ANGLE(desiredDir.y)));
+	return ivec2(ANGLE2SHORT(delta.x), ANGLE2SHORT(delta.y));
 }
 
 fvec2 GetRealAngles()
 {
-	fvec2 deltaangles = { dataptr::cg->nextSnap->ps.delta_angles[0], dataptr::cg->nextSnap->ps.delta_angles[1] };
-	fvec2 viewangles = { dataptr::client->viewangles[0], dataptr::client->viewangles[1] };
+	fvec2 deltaangles = fvec2(dataptr::cg->nextSnap->ps.delta_angles);
+	fvec2 viewangles = fvec2(dataptr::client->viewangles);
 	return AngleNormalize180(viewangles + deltaangles);
+}
+
+ivec2 GetRealShortAngles()
+{
+	const auto angles = GetRealAngles();
+	return ivec2(ANGLE2SHORT(angles.x), ANGLE2SHORT(angles.y));
+}
+
+ivec2 GetRealCmdAngles(const usercmd_t* const cmd)
+{
+	fvec2 deltaangles = fvec2(dataptr::cg->nextSnap->ps.delta_angles);
+	return ivec2(cmd->viewangles) + ivec2(ANGLE2SHORT(deltaangles.x), ANGLE2SHORT(deltaangles.y));
 }

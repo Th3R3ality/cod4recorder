@@ -31,6 +31,16 @@ namespace recorder
 			viewangles[0] = cmd->viewangles[0];
 			viewangles[1] = cmd->viewangles[1];
 		}
+
+		explicit Smallcmd(const usercmd_t* cmd, const ivec2& angles) :
+			servertime(cmd->servertime),
+			buttons(cmd->buttons),
+			forwardmove(cmd->forwardmove),
+			sidemove(cmd->sidemove)
+		{
+			viewangles[0] = angles.x;
+			viewangles[1] = angles.y;
+		}
 	};
 	
 	struct Recording
@@ -64,6 +74,8 @@ namespace recorder
 	};
 
 	inline bool isRecording = false;
+	inline bool waitingForStandstill = false;
+	inline bool waitingForMove = false;
 
 	inline std::vector<std::shared_ptr<Recording>> recordings = {};
 	inline std::shared_ptr<Recording> currentRecording = nullptr;
@@ -78,10 +90,10 @@ namespace recorder
 	void SaveSegmentToCurrentRecording();
 	void DiscardSegment();
 	
-	void WantNewSegment(bool isFirstSegment = false);
+	void WantNewSegment();
 	bool WantsToRecord();
 	bool CanStartRecording();
 
-	void CaptureCommand(const usercmd_t* cmd);
+	void CaptureCommand(usercmd_t* const cmd);
 	void RecordingWasRemovedFromDisk(unsigned long long uuid);
 }

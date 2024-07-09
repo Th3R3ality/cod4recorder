@@ -175,7 +175,7 @@ namespace userinterface
 				{
 					if (Button("Start Recording", btnSize))
 					{
-						recorder::WantNewSegment(true);
+						recorder::WantNewSegment();
 					}
 					NewLine();
 				}
@@ -183,7 +183,7 @@ namespace userinterface
 				{
 					if (Button("New Segment", btnSize))
 					{
-						recorder::WantNewSegment(false);
+						recorder::WantNewSegment();
 					}
 					HelpMarker(
 						"This will start replaying the current recording.\n"
@@ -333,8 +333,20 @@ namespace userinterface
 		{
 			Begin("Debug Controls");
 
+			fvec2 realrealangles = GetRealAngles();
+			Text("realrealangles");
+			Text("    %f, %f", realrealangles.x, realrealangles.y);
+
+			fvec2 cgameangles = fvec2(dataptr::client->cgameViewangles);
+			Text("cgameangles");
+			Text("    %f, %f", cgameangles.x, cgameangles.y);
+
+			fvec2 predictedangles = { dataptr::cg->predictedPlayerState.delta_angles[0], dataptr::cg->predictedPlayerState.delta_angles[1] };
+			Text("predictedangles");
+			Text("    %f, %f", predictedangles.x, predictedangles.y);
+
 			fvec2 deltaangles = { dataptr::cg->nextSnap->ps.delta_angles[0], dataptr::cg->nextSnap->ps.delta_angles[1] };
-			Text("nextSnap->ps.delta_angles");
+			Text("deltaangles");
 			Text("    %f, %f", deltaangles.x, deltaangles.y);
 
 			fvec2 viewangles = { dataptr::client->viewangles[0], dataptr::client->viewangles[1] };
@@ -345,29 +357,29 @@ namespace userinterface
 			Text("realangles");
 			Text("    %f, %f", realangles.x, realangles.y);
 
-			//fvec2 cmdangles = { SHORT2ANGLE(global::cmd.viewangles[0]), SHORT2ANGLE(global::cmd.viewangles[1])};
-			//Text("cmd angle");
-			//Text("    %f, %f", cmdangles.x, cmdangles.y);
+			fvec2 cmdangles = { SHORT2ANGLE(global::cmd.viewangles[0]), SHORT2ANGLE(global::cmd.viewangles[1])};
+			Text("cmd angle");
+			Text("    %f, %f", cmdangles.x, cmdangles.y);
 
-			//fvec2 deltas = AngleDelta(deltaangles, cmdangles);
-			//Text("deltas");
-			//Text("    %f, %f", deltas.x, deltas.y);
+			fvec2 deltas = AngleDelta(deltaangles, cmdangles);
+			Text("deltas");
+			Text("    %f, %f", deltas.x, deltas.y);
 
-			//fvec2 real_delta = AngleDelta(deltas, deltaangles);
-			//Text("real_delta");
-			//Text("    %f, %f", real_delta.x, real_delta.y);
+			fvec2 real_delta = AngleDelta(deltas, deltaangles);
+			Text("real_delta");
+			Text("    %f, %f", real_delta.x, real_delta.y);
 
-			//fvec2 test = { -AngleNormalize180(cmdangles.x), -AngleNormalize180(cmdangles.y) };
-			//Text("test");
-			//Text("    %f, %f", test.x, test.y);
+			fvec2 test = { -AngleNormalize180(cmdangles.x), -AngleNormalize180(cmdangles.y) };
+			Text("test");
+			Text("    %f, %f", test.x, test.y);
 
-			//fvec2 final = AngleDelta(deltaangles, fvec2(0.f, 90.f));
-			//Text("final");
-			//Text("    %f, %f", final.x, final.y);
+			fvec2 final = AngleDelta(deltaangles, fvec2(0.f, 90.f));
+			Text("final");
+			Text("    %f, %f", final.x, final.y);
 
-			//fvec2 finaladd = test - final;
-			//Text("finaladd");
-			//Text("    %f, %f", finaladd.x, finaladd.y);
+			fvec2 finaladd = test - final;
+			Text("finaladd");
+			Text("    %f, %f", finaladd.x, finaladd.y);
 
 
 			Text("com_maxfps %i", GetDvar(dataid::dvar::com_maxfps.offset)->current.integer);
@@ -430,6 +442,54 @@ namespace userinterface
 		GetClientRect(global::window, &clientRect);
 		auto defaultSize = ImVec2(160, 60);
 
+		// current recording indicator
+		{
+			if (recorder::currentRecording != nullptr)
+			{
+				static ImGuiWindowFlags flags =
+					ImGuiWindowFlags_AlwaysAutoResize |
+					ImGuiWindowFlags_NoResize |
+					ImGuiWindowFlags_NoMove |
+					ImGuiWindowFlags_NoInputs |
+					ImGuiWindowFlags_NoMouseInputs |
+					ImGuiWindowFlags_NoTitleBar;
+
+				SetNextWindowPos(ImVec2(50, 40));
+
+				PushStyleColor(ImGuiCol_WindowBg, ImColor(20, 20, 20, 125).Value);
+				Begin("CurrentRecordingIndicator", 0, flags);
+
+				ImColor green = ImColor(0.f, 1.f, 0.f, 1.f);
+				ImColor red = ImColor(1.f, 0.f, 0.f, 1.f);
+
+				const char* currentAction = recorder::isRecording ? "RECORDING" : replayer::isReplaying ? "REPLAYING" : "IDLE";
+				Text(currentAction);
+				Text("%s", recorder::currentRecording->name);
+
+				if (recorder::isRecording || replayer::isReplaying)
+				{
+					NewLine();
+					TextColored(red, "F4 - Stop");
+				}
+				else
+				{
+					if (recorder::currentSegment.size() == 0)
+					{
+						TextColored(green, "F3 - New Segment");
+						TextColored(red, "F4 - Deselect Recording");
+					}
+					else
+					{
+						TextColored(green, "F3 - Save Segment");
+						TextColored(red, "F4 - Discard Segment");
+					}
+				}
+
+				End();
+				PopStyleColor();
+			}
+		}
+
 		//speed graph
 		if (showSpeedGraph)
 		{
@@ -471,29 +531,44 @@ namespace userinterface
 
 		// countdown indicators
 		{
+			auto indicatorPos = ImVec2(clientRect.right / 2 - defaultSize.x / 2, (clientRect.bottom * 3) / 4);
 			if (userinterface::replayCountDown > 0)
 			{
 				std::string text = std::format("Replaying in {}", userinterface::replayCountDown);
-				DrawIndicator(ImVec2(clientRect.right / 2 - defaultSize.x / 2, (clientRect.bottom * 3) / 4), defaultSize, text);
+				DrawIndicator(indicatorPos, defaultSize, text);
 			}
 			else if (replayer::isReplaying)
 			{
 				std::string text = std::format("[- {} / {} -]",
-					replayer::recordingIndex + 1,
+					replayer::cmdIndex + 1,
 					recorder::currentRecording->cmds.size());
-				DrawIndicator(ImVec2(clientRect.right / 2 - defaultSize.x / 2, (clientRect.bottom * 3) / 4), defaultSize, text);
+				DrawIndicator(indicatorPos, defaultSize, text);
 			}
 
-			if (userinterface::recordCountDown > 0)
+			if (recorder::waitingForStandstill)
 			{
-				std::string text = std::format("Recording in {}", userinterface::recordCountDown);
-				DrawIndicator(ImVec2(clientRect.right / 2 - defaultSize.x / 2, (clientRect.bottom * 3) / 4), defaultSize, text);
+				DrawIndicator(indicatorPos, ImVec2(defaultSize.x * 1.5f, defaultSize.y), "Waiting for Standstill");
+			}
+			else if (recorder::waitingForMove)
+			{
+				DrawIndicator(indicatorPos, defaultSize, "Move To Begin");
 			}
 			else if (recorder::isRecording)
 			{
 				std::string text = std::format("[+ {} +]", recorder::currentSegment.size());
-				DrawIndicator(ImVec2(clientRect.right / 2 - defaultSize.x / 2, (clientRect.bottom * 3) / 4), defaultSize, text);
+				DrawIndicator(indicatorPos, defaultSize, text);
 			}
+
+			//if (userinterface::recordCountDown > 0)
+			//{
+			//	std::string text = std::format("Recording in {}", userinterface::recordCountDown);
+			//	DrawIndicator(ImVec2(clientRect.right / 2 - defaultSize.x / 2, (clientRect.bottom * 3) / 4), defaultSize, text);
+			//}
+			//else if (recorder::isRecording)
+			//{
+			//	std::string text = std::format("[+ {} +]", recorder::currentSegment.size());
+			//	DrawIndicator(ImVec2(clientRect.right / 2 - defaultSize.x / 2, (clientRect.bottom * 3) / 4), defaultSize, text);
+			//}
 		}
 	}
 

@@ -12,6 +12,10 @@ __declspec(noinline) void __fastcall logic(usercmd_t* const cmd, [[maybe_unused]
 	if (global::debugPrints)
 		printf("CL_CreateCmd\n");
 
+	playerState_t* ps = &dataptr::cg->predictedPlayerState;
+
+	printf("pm_type: %i\n", ps->pm_type);
+
 	if (recorder::isRecording)
 	{
 		recorder::CaptureCommand(cmd);

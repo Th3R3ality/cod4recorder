@@ -42,14 +42,25 @@ namespace replayer
 		currentRecording = nullptr;
 		isReplaying = false;
 
-		if (cmd != nullptr && recorder::WantsToRecord())
+		fvec2 deltaRot = GetViewDeltaToDirection(GetViewAngles()); //dataptr::client->cgameViewangles
+
+		dataptr::client->viewangles[0] += deltaRot.x;
+		dataptr::client->viewangles[1] += deltaRot.y;
+
+		if (cmd != nullptr)
 		{
-			recorder::StartRecordingSegment(recordingIndex, replayer::startServertime);
-			recorder::CaptureCommand(cmd);
+			cmd->viewangles[0] += ANGLE2SHORT(deltaRot.x);
+			cmd->viewangles[1] += ANGLE2SHORT(deltaRot.y);
+
+			if (recorder::WantsToRecord())
+			{
+				recorder::StartRecordingSegment(cmdIndex, replayer::startServertime);
+				recorder::CaptureCommand(cmd);
+			}
 		}
 
 		replayer::startServertime = 0;
-		recordingIndex = 0;
+		cmdIndex = 0;
 	}
 
 	void WantReplay(bool repeating)
@@ -76,13 +87,13 @@ namespace replayer
 		{
 			return replayer::Stop(cmd);
 		}
-		if (replayer::recordingIndex >= currentRecording->cmds.size())
+		if (replayer::cmdIndex >= currentRecording->cmds.size())
 		{
 			return replayer::Stop(cmd);
 		}
 
-		auto& smallcmd = currentRecording->cmds.at(replayer::recordingIndex);
-		if (replayer::recordingIndex == 0)
+		auto& smallcmd = currentRecording->cmds.at(replayer::cmdIndex);
+		if (replayer::cmdIndex == 0)
 		{
 			startServertime = cmd->servertime;
 
@@ -104,12 +115,16 @@ namespace replayer
 		cmd->servertime = startServertime + smallcmd.servertime;
 		cmd->buttons = smallcmd.buttons;
 
-		cmd->viewangles[0] = smallcmd.viewangles[0] - viewangle0offset;
-		cmd->viewangles[1] = smallcmd.viewangles[1] - viewangle1offset;
+		//cmd->viewangles[0] = smallcmd.viewangles[0] - viewangle0offset;
+		//cmd->viewangles[1] = smallcmd.viewangles[1] - viewangle1offset;
+		ivec2 deltaRot = GetViewDeltaToDirection(ivec2(smallcmd.viewangles.data()));
+
+		cmd->viewangles[0] += deltaRot.x;
+		cmd->viewangles[1] += deltaRot.y;
 
 		cmd->forwardmove = smallcmd.forwardmove;
 		cmd->sidemove = smallcmd.sidemove;
 
-		replayer::recordingIndex++;
+		replayer::cmdIndex++;
 	}
 }

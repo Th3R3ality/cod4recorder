@@ -3,7 +3,7 @@
 
 namespace replayer
 {
-	inline size_t recordingIndex = 0;
+	inline size_t cmdIndex = 0;
 	inline bool isReplaying = false;
 	inline bool autoReplay = false;
 	inline int startServertime = 0;

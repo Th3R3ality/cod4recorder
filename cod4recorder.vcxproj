@@ -106,7 +106,7 @@
     <ClCompile Include="src\minhook\hde\hde64.c" />
     <ClCompile Include="src\minhook\hook.c" />
     <ClCompile Include="src\minhook\trampoline.c" />
-    <ClCompile Include="src\savefile.cpp" />
+    <ClCompile Include="src\fsio.cpp" />
     <ClCompile Include="src\timing.cpp" />
     <ClCompile Include="src\userinterface.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -231,7 +231,7 @@
     <ClInclude Include="src\minhook\hde\table64.h" />
     <ClInclude Include="src\minhook\MinHook.h" />
     <ClInclude Include="src\minhook\trampoline.h" />
-    <ClInclude Include="src\savefile.h" />
+    <ClInclude Include="src\fsio.h" />
     <ClInclude Include="src\timing.h" />
     <ClInclude Include="src\userinterface.h" />
     <ClInclude Include="src\window.h" />

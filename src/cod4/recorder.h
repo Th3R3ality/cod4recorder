@@ -71,6 +71,8 @@ namespace recorder
 			std::uniform_int_distribution<std::mt19937_64::result_type> distribution(0LL);
 			uuid = distribution(rng);
 		}
+
+
 	};
 
 	inline bool isRecording = false;
@@ -96,4 +98,5 @@ namespace recorder
 
 	void CaptureCommand(usercmd_t* const cmd);
 	void RecordingWasRemovedFromDisk(unsigned long long uuid);
+	bool IsRecordingInMemory(unsigned long long uuid);
 }

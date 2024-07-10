@@ -7,6 +7,7 @@
 #include "outpacket.h"
 #include "entitystate.h"
 #include "clientstate.h"
+#include "../../vec.h"
 
 struct clientActive_t
 {
@@ -25,8 +26,8 @@ struct clientActive_t
 	char mapname[64];			// extracted from CS_SERVERINFO
 	int parseEntitiesNum;		// index (not anded off) into cl_parse_entities[]
 	int parseClientsNum;
-	int mouseDx[2];				// added to by mouse events
-	int mouseDy[2];				// added to by mouse events
+	ivec2 mouseDx;				// added to by mouse events
+	ivec2 mouseDy;				// added to by mouse events
 	int mouseIndex;
 	bool stanceHeld;
 	StanceState stance;
@@ -37,15 +38,15 @@ struct clientActive_t
 	float cgameFOVSensitivityScale;
 	float cgameMaxPitchSpeed;
 	float cgameMaxYawSpeed;
-	float cgameKickAngles[3];
-	float cgameOrigin[3];
-	float cgameVelocity[3];
-	float cgameViewangles[3];
+	fvec3 cgameKickAngles;
+	fvec3 cgameOrigin;
+	fvec3 cgameVelocity;
+	fvec3 cgameViewangles;
 	int cgameBobCycle;
 	int cgameMovementDir;
 	int cgameExtraButtons;
 	int cgamePredictedDataServerTime;
-	float viewangles[3];
+	fvec3 viewangles;
 	int serverId;
 	int skelTimeStamp;
 	volatile int skelMemPos;

@@ -118,7 +118,7 @@ namespace recorder
 		{
 			if (waitingForStandstill) // nesting these for performance (only 1 if check per iteration)
 			{
-				if (Magnitude(dataptr::client->cgameVelocity) != 0)
+				if (dataptr::client->cgameVelocity.MagSq() != 0)
 					return;
 				else
 				{
@@ -138,7 +138,7 @@ namespace recorder
 			}
 
 			currentRecording->startRot = GetRealAngles();
-			currentRecording->startPos = fvec3(dataptr::client->cgameOrigin);
+			currentRecording->startPos = dataptr::client->cgameOrigin;
 
 			startServertime = cmd->servertime;
 			isNewRecording = false;
@@ -173,5 +173,14 @@ namespace recorder
 			recording->onDiskOffset = 0;
 			break;
 		}
+	}
+	bool IsRecordingInMemory(unsigned long long uuid)
+	{
+		for (auto& recording : recordings)
+		{
+			if (recording->uuid == uuid)
+				return true;
+		}
+		return false;
 	}
 }

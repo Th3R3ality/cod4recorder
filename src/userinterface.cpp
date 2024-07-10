@@ -1,16 +1,18 @@
 #include "userinterface.h"
+#include <string>
+#include <format>
+
 #include "includes.h"
 #include "global.h"
 #include "cod4/include.h"
-#include "savefile.h"
+#include "fsio.h"
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_win32.h"
 #include "imgui/imgui_impl_dx9.h"
 
-#include <string>
-#include <format>
 #include "cod4/angles.h"
+#include "imgui/imgui_internal.h"
 
 #define PUSHGREYBTN(x) \
 PushStyleColor(ImGuiCol_Button, ImColor(50, 200, 100, 80).Value); \
@@ -41,9 +43,21 @@ namespace userinterface
 	void DrawRecordingsMenu();
 	void DrawDebugMenu();
 	void DrawIndicators();
+	void DrawRecordingsInWorld();
+
 	void DrawIndicator(ImVec2 pos, ImVec2 size, std::string text);
-	void TextCentered(std::string text);
+	void TextWindowCentered(std::string text);
 	void ButtonToggle(const char* label, bool& v);
+
+	namespace world
+	{
+		void TextCentered(ImDrawList* drawList, const char* text, ivec2& xy);
+		void TextCenteredColored(ImDrawList* drawList, const char* text, const ivec2& xy, const ImColor& col);
+	}
+
+	RECT clientRect;
+	ivec2 clientSize;
+	ImColor rainbow;
 
 	bool showCurrentRecordingMenu = true;
 	bool showReplaysMenu = true;
@@ -54,13 +68,24 @@ namespace userinterface
 	void Draw()
 	{
 		using namespace ImGui;
+		static auto& io = GetIO();
+
 		ImGui_ImplDX9_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		NewFrame();
 
+		GetClientRect(global::window, &clientRect);
+		clientSize = ivec2(clientRect.right, clientRect.bottom);
+
+		static float hue = 0.f;
+		hue += 0.0008f;
+		rainbow = ImColor::HSV(hue, 0.7f, 1.f);
+
+		DrawRecordingsInWorld();
+
 		if (userinterface::showMenu)
 		{
-			GetIO().MouseDrawCursor = true;
+			io.MouseDrawCursor = true;
 
 			BeginMainMenuBar();
 			
@@ -71,7 +96,7 @@ namespace userinterface
 			ButtonToggle("ImGui Demo", showDemoMenu);
 
 			EndMainMenuBar();
-			
+
 			if (showCurrentRecordingMenu) DrawCurrentRecordingMenu();
 			if (showReplaysMenu) DrawRecordingsMenu();
 			if (showDebugMenu) DrawDebugMenu();
@@ -251,9 +276,20 @@ namespace userinterface
 
 		if (CollapsingHeader("Recordings in Memory"))
 		{
+
+			static std::shared_ptr<recorder::Recording> deletionRecording = nullptr;
 			for (std::shared_ptr<recorder::Recording> recording : recorder::recordings)
 			{
-				if (TreeNode(std::format("%s###mem{}", recording->uuid).c_str(), recording->name))
+				AlignTextToFramePadding();
+				bool node_open = TreeNode(std::format("%s###mem{}", recording->uuid).c_str(), recording->name);
+				SameLine(GetWindowWidth() - 30);
+				PUSHREDBTN(
+					if (Button(std::format("X###closebtn{}", recording->uuid).c_str(), ImVec2(20, 19)))
+					{
+						deletionRecording = recording;
+					}
+				);
+				if (node_open)
 				{
 					InputText(std::format("###memname{}", recording->uuid).c_str(), recording->name, 63);
 					
@@ -278,26 +314,40 @@ namespace userinterface
 					if (!recording->onDisk)
 					{
 						if (Button("Save to Disk"))
-							savefile::SaveRecordingToDisk(recording);
+							fsio::SaveRecordingToDisk(recording);
 					}
 					else
 					{
 						if (Button("Delete from Disk"))
 						{
-							savefile::DeleteRecordingOnDisk(recording->uuid);
+							fsio::DeleteRecordingOnDisk(recording->uuid);
 						}
 					}
 
 					TreePop();
 				}
 			}
+
+			if (deletionRecording != nullptr)
+			{
+				recorder::recordings.erase(
+					std::find(
+						recorder::recordings.begin(),
+						recorder::recordings.end(),
+						deletionRecording
+					)
+				);
+
+				
+				deletionRecording = nullptr;
+			}
 		}
 
 		if (CollapsingHeader("Peek Recordings on Disk"))
 		{
-			/*auto& diskRecordings = savefile::PeekSavedRecordings();
+			const auto& diskRecordings = fsio::PeekSavedRecordings();
 
-			for (auto& disk : diskRecordings)
+			for (const auto& disk : diskRecordings)
 			{
 				if (!disk.inUse)
 					continue;
@@ -312,16 +362,16 @@ namespace userinterface
 					
 					if (Button("Load"))
 					{
-						savefile::LoadRecordingFromDisk(disk.uuid);
+						fsio::LoadRecordingFromDisk(disk.uuid);
 					}
 					if (Button("Delete"))
 					{
-						savefile::DeleteRecordingOnDisk(disk.uuid);
+						fsio::DeleteRecordingOnDisk(disk.uuid);
 					}
 
 					TreePop();
 				}
-			}*/
+			}
 		}
 		End();
 	}
@@ -406,7 +456,7 @@ namespace userinterface
 
 			Checkbox("Debug prints", &global::debugPrints);
 
-			/*auto& diskRecordings = savefile::PeekSavedRecordings();
+			auto& diskRecordings = fsio::PeekSavedRecordings();
 
 			for (auto& disk : diskRecordings)
 			{
@@ -418,18 +468,9 @@ namespace userinterface
 					Text("used : %s", disk.inUse ? "True" : "False");
 					Text("frag : %lu", disk.fragmentCmdCap);
 
-					if (Button("Load"))
-					{
-						savefile::LoadRecordingFromDisk(disk.uuid);
-					}
-					if (Button("Delete"))
-					{
-						savefile::DeleteRecordingOnDisk(disk.uuid);
-					}
-
 					TreePop();
 				}
-			}*/
+			}
 
 			End();
 		}
@@ -438,8 +479,6 @@ namespace userinterface
 	void DrawIndicators()
 	{
 		using namespace ImGui;
-		RECT clientRect;
-		GetClientRect(global::window, &clientRect);
 		auto defaultSize = ImVec2(160, 60);
 
 		// current recording indicator
@@ -572,6 +611,43 @@ namespace userinterface
 		}
 	}
 
+	void DrawRecordingsInWorld()
+	{
+		using namespace ImGui;
+
+		ImGui::SetNextWindowPos(ImVec2(0, 0));
+		ImGui::SetNextWindowSize(clientSize);
+		ImGui::Begin("Overlay", nullptr,
+			ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+			ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
+
+		ImDrawList* drawlist = ImGui::GetWindowDrawList();
+
+		for (auto& rec : recorder::recordings)
+		{
+			std::optional<ivec2> xy = WorldToScreen(rec->startPos);
+			if (xy.has_value())
+			{
+				const float dist = dataptr::client->cgameOrigin.dist(rec->startPos);
+				if (dist > 350) continue;
+				ImVec4 col = rainbow.operator ImVec4();
+				col.w = (1 - ((dist - 300) / 50));
+
+				world::TextCenteredColored(drawlist,
+					rec->name,
+					xy.value(),
+					col);
+				world::TextCenteredColored(drawlist,
+					std::format("{}",dist).c_str(),
+					xy.value() + ivec2(0, 12),
+					col);
+			}
+		}
+
+		ImGui::End();
+	}
+
 	void DrawIndicator(ImVec2 pos, ImVec2 size, std::string text)
 	{
 		using namespace ImGui;
@@ -586,11 +662,11 @@ namespace userinterface
 		SetNextWindowPos(pos);
 
 		Begin("ReplayCountdownIndicator", 0, flags);
-		TextCentered(text);
+		TextWindowCentered(text);
 		End();
 	}
 
-	void TextCentered(std::string text)
+	void TextWindowCentered(std::string text)
 	{
 		float win_width = ImGui::GetWindowSize().x;
 		float text_width = ImGui::CalcTextSize(text.c_str()).x;
@@ -632,5 +708,19 @@ namespace userinterface
 		else
 			if (Button(label))
 				v = !v;
+	}
+
+	namespace world
+	{
+		void TextCentered(ImDrawList* drawList, const char* text, ivec2& xy)
+		{
+			TextCenteredColored(drawList, text, xy, ImColor(1.f, 1.f, 1.f, 1.f));
+		}
+
+		void TextCenteredColored(ImDrawList* drawList, const char* text, const ivec2& xy, const ImColor& col)
+		{
+			ImVec2 wh = ImGui::CalcTextSize(text);
+			drawList->AddText((xy - (ivec2(wh) / 2)).operator ImVec2(), col.operator unsigned int(), text);
+		}
 	}
 }

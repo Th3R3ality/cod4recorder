@@ -16,7 +16,7 @@ struct vec2
 
 	//constexpr vec2(const float(*a)[2]) { x = a[0]; y = a[1];  }
 #ifdef IMGUI_API
-	constexpr vec2(const ImVec2 b) { x = b.x; y = b.y; };
+	constexpr vec2(const ImVec2 b) { x = static_cast<T>(b.x); y = static_cast<T>(b.y); };
 #endif
 	vec2 operator+(const vec2& v) const { return { x + v.x, y + v.y }; }
 	vec2 operator-(const vec2& v) const { return { x - v.x, y - v.y }; }

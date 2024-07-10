@@ -2161,12 +2161,23 @@ static void ShowDemoWindowLayout()
             const float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
             ImGui::Button("Button##1");
             ImGui::SameLine(0.0f, spacing);
-            if (ImGui::TreeNode("Node##1")) { for (int i = 0; i < 6; i++) ImGui::BulletText("Item %d..", i); ImGui::TreePop(); }    // Dummy tree data
+            if (ImGui::TreeNode("Node##1"))
+            {
+                for (int i = 0; i < 6; i++)
+                    ImGui::BulletText("Item %d..", i);
+                ImGui::TreePop();
+            }    // Dummy tree data
 
             ImGui::AlignTextToFramePadding();           // Vertically align text node a bit lower so it'll be vertically centered with upcoming widget. Otherwise you can use SmallButton (smaller fit).
             bool node_open = ImGui::TreeNode("Node##2");// Common mistake to avoid: if we want to SameLine after TreeNode we need to do it before we add child content.
-            ImGui::SameLine(0.0f, spacing); ImGui::Button("Button##2");
-            if (node_open) { for (int i = 0; i < 6; i++) ImGui::BulletText("Item %d..", i); ImGui::TreePop(); }   // Dummy tree data
+            ImGui::SameLine(0.0f, spacing);
+            ImGui::Button("Button##2");
+            if (node_open)
+            {
+                for (int i = 0; i < 6; i++)
+                    ImGui::BulletText("Item %d..", i);
+                ImGui::TreePop();
+            }   // Dummy tree data
 
             // Bullet
             ImGui::Button("Button##3");

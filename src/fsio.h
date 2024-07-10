@@ -3,7 +3,7 @@
 
 #include "cod4/recorder.h"
 
-namespace savefile
+namespace fsio // filesystem I/O
 {
 	struct DiskReplay
 	{
@@ -11,9 +11,9 @@ namespace savefile
 		unsigned long long uuid = 0;
 		fvec3 startPos = {0.0f, 0.0f, 0.0f};
 		fvec2 startRot = {0.0f, 0.0f};
-		size_t offset = 0;
 		size_t cmdCount = 0;
 		size_t fragmentCmdCap = 0;
+		size_t offset = 0;
 		bool inUse = false;
 
 		DiskReplay() = default;
@@ -21,6 +21,19 @@ namespace savefile
 		DiskReplay(long long uuid)
 			: uuid(uuid)
 		{}
+
+		DiskReplay(std::shared_ptr<recorder::Recording> recording)
+		{
+			strncpy_s<sizeof(DiskReplay::name)>(this->name, recording->name, sizeof(DiskReplay::name) - 1);
+			this->name[sizeof(DiskReplay::name) - 1] = '\0';
+			uuid = recording->uuid;
+			startPos = recording->startPos;
+			startRot = recording->startRot;
+			fragmentCmdCap = cmdCount = recording->cmds.size();
+
+			//size_t offset = 0;	These are set in fsio.cpp
+			//bool inUse = false;
+		}
 	};
 
 	enum SaveError
@@ -32,6 +45,7 @@ namespace savefile
 		RecordingAlreadyOnDisk,
 		RecordingNotOnDisk,
 		BadFile,
+		RecordingAlreadyInMemory,
 	};
 
 	void Init();
@@ -40,4 +54,6 @@ namespace savefile
 	SaveError DeleteRecordingOnDisk(unsigned long long uuid);
 	SaveError LoadRecordingFromDisk(unsigned long long uuid);
 	const char* GetErrorMessage(SaveError error);
+
+	void RecordingWasRemovedFromMemory(unsigned long long uuid);
 }

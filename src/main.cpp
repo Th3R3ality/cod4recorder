@@ -5,7 +5,7 @@
 #include "window.h"
 #include "input.h"
 #include "cod4/include.h"
-#include "savefile.h"
+#include "fsio.h"
 
 #include "imgui/include.h"
 
@@ -26,7 +26,7 @@ DWORD WINAPI MainThread(HMODULE hModule)
 	printf("hello\n");
 	printf("BaseAddress : %x\n", global::baseAddress);
 
-	savefile::Init();
+	fsio::Init();
 	timing::Init();
 	hooks::Init();
 

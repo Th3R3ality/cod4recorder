@@ -7,6 +7,7 @@
 #include "actionslotparam.h"
 #include "objective.h"
 #include "hud.h"
+#include "../../vec.h"
 
 // playerState_t is the information needed by both the client and server
 // to predict player motion and actions
@@ -34,7 +35,7 @@ struct playerState_t
 	int gravity;
 	float leanf;
 	int speed;
-	float delta_angles[3];
+	fvec3 delta_angles;
 	int groundEntityNum;
 	float vLadderVec[3];
 	int jumpTime;

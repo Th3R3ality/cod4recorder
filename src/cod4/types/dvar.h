@@ -1,46 +1,54 @@
 #pragma once
 #include <stdint.h>
 
-enum dvar_flag : uint16_t
+enum dvar_flags : uint16_t
 {
+    none = 0x0,
+    saved = 0x1,
+    user_info = 0x2, // sent to server on connect or change
+    server_info = 0x4, // sent in response to front end requests
+    replicated = 0x8,
     write_protected = 0x10,
+    latched = 0x20,
     read_only = 0x40,
     cheat_protected = 0x80,
+    temp = 0x100,
+    no_restart = 0x400, // do not clear when a cvar_restart is issued
+    user_created = 0x4000, // created by a set command
 };
 
-enum class dvar_type : uint8_t
+enum class dvar_type : int8_t
 {
-    dvar_boolean = 0,
-    dvar_float,
-    dvar_2d_vector,
-    dvar_3d_vector,
-    dvar_4d_vector,
-    dvar_int,
-    dvar_select,
-    dvar_text,
-    dvar_color,
+    boolean = 0,
+    decimal = 1,
+    vec2 = 2,
+    vec3 = 3,
+    vec4 = 4,
+    integer = 5,
+    enumeration = 6,
+    string = 7,
+    color = 8,
+    rgb = 9 // Color without alpha
 };
+constexpr const char* dvar_types[] = { "boolean", "float", "2d vector", "3d vector", "4d vector", "integer", "enumeration", "string", "color", "rgb"};
 
-constexpr const char* dvar_types[] = { "boolean", "float", "2d vector", "3d vector", "4d vector", "integer", "select", "text", "color" };
-
-#pragma pack(push, 1)
 union dvar_value
 {
-    uint8_t enabled;
-    int32_t integer;
-    uint32_t uint;
-    float flt;
+    bool enabled;
+    int integer;
+    unsigned int unsignedInt;
+    float decimal;
     float vector[4];
     const char* string;
-    uint8_t color[4];
+    char color[4];
 };
 
 union dvar_limits
 {
     struct
     {
-        int string_count;
-        char** strings;
+        int stringCount;
+        const char** strings;
     } enumeration;
 
     struct
@@ -54,29 +62,45 @@ union dvar_limits
         float min;
         float max;
     } decimal;
+
+    struct
+    {
+        float min;
+        float max;
+    } vector;
 };
 
 struct dvar_t
 {
-    const char* name;              // 0x0
-    const char* description;       // 0x4
-    uint16_t flags;                // 0x8
-    dvar_type type;                // 0xA
-    uint8_t modified;              // 0xB
+    const char* name;
+    const char* description;
+    dvar_flags flags; // short
+    dvar_type type; // char
+    bool modified;
     dvar_value current;
     dvar_value latched;
-    dvar_value default_value;
-    dvar_limits limits;
-    dvar_t* prev;                  // 0x44
-    dvar_t* next;                  // 0x48
+    dvar_value reset;
+    dvar_limits domain;
+    bool(__cdecl* domainFunc)(dvar_t*, dvar_value);
+    dvar_t* hashNext;
 
-    bool toggle_flag(const uint16_t flag)
+
+    bool toggle_flag(const dvar_flags flag)
     {
         if (this->flags & flag)
-            this->flags &= ~flag;
+            (*(uint16_t*)&this->flags) &= ~(uint16_t)flag;
         else
-            this->flags |= flag;
+            (*(uint16_t*)&this->flags) |= (uint16_t)flag;
         return this->flags & flag;
     }
 };
-#pragma pack(pop)
+
+inline dvar_t* Dvar_Find(const char* name)
+{
+    constexpr unsigned long addr = 0x56b5d0;
+    __asm
+    {
+        mov edi, name
+        call[addr]
+    }
+}

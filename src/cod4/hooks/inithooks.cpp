@@ -1,5 +1,6 @@
 #include "hk_decl.h"
 #include <iostream>
+#include "../cod4x.h"
 
 namespace hooks
 {
@@ -16,16 +17,16 @@ namespace hooks
 		return HookAddr((LPVOID)(global::baseAddress + offset), detour, ppOrig);
 	}
 
-	inline uintptr_t VMTEntryHook(uintptr_t VMT, size_t Index, uintptr_t Destination)
+	inline void VMTEntryHook(uintptr_t VMT, size_t Index, uintptr_t Destination, uintptr_t* ppOrig = nullptr)
 	{
 		uintptr_t* Address = (uintptr_t*)(VMT + Index * sizeof(uintptr_t));
 
 		DWORD OldProtection{ 0 };
 		VirtualProtect(Address, sizeof(uintptr_t), PAGE_READWRITE, &OldProtection);
-		uintptr_t result = *Address;
+		if (ppOrig != nullptr)
+			*ppOrig = *Address;
 		*Address = Destination;
 		VirtualProtect(Address, sizeof(uintptr_t), OldProtection, &OldProtection);
-		return result;
 	}
 
 	unsigned long d3dVMT = 0;
@@ -39,12 +40,28 @@ namespace hooks
 			MH_StatusToString(
 				Hook(dataid::func::CL_CreateCmd.offset, CL_CreateCmd, &orig_CL_CreateCmd)));
 
+		printf("hooking simcrash1 : %s\n",
+			MH_StatusToString(
+				HookAddr((void*)dataid::func::simcrash1.addr, simcrash1, &orig_simcrash1)));
 
-		orig_EndScene = VMTEntryHook(d3dVMT, d3dindex::end_scene, (uintptr_t)EndScene);
+		printf("hooking simcrash2 : %s\n",
+			MH_StatusToString(
+				HookAddr((void*)dataid::func::simcrash2.addr, simcrash2, &orig_simcrash2)));
+
+		VMTEntryHook(d3dVMT, d3dindex::end_scene, (uintptr_t)EndScene, &orig_EndScene);
 		printf("hooking EndScene : %x\n", orig_EndScene);
 
-		orig_Reset = VMTEntryHook(d3dVMT, d3dindex::reset, (uintptr_t)Reset);
+		VMTEntryHook(d3dVMT, d3dindex::reset, (uintptr_t)Reset, &orig_Reset);
 		printf("hooking Reset : %x\n", orig_Reset);
+
+
+		if (uintptr_t base = cod4x::base())
+		{
+			printf("hooking antihook {cod4x} : %s\n",
+				MH_StatusToString(
+					HookAddr((void*)(base + 0x43580), antihook, &orig_antihook)));
+			
+		}
 	}
 	void Detach()
 	{

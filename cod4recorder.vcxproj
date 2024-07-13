@@ -46,13 +46,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LibraryPath>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;$(LibraryPath)</LibraryPath>
     <IncludePath>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)bin</OutDir>
-    <IntDir>$(SolutionDir)bin\intermediate</IntDir>
+    <OutDir>$(SolutionDir)bin\</OutDir>
+    <IntDir>$(SolutionDir)bin\intermediate\</IntDir>
     <TargetName>$(ProjectName)_$(Configuration)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)bin</OutDir>
-    <IntDir>$(SolutionDir)bin\intermediate</IntDir>
+    <OutDir>$(SolutionDir)bin\</OutDir>
+    <IntDir>$(SolutionDir)bin\intermediate\</IntDir>
     <TargetName>$(ProjectName)_$(Configuration)</TargetName>
     <IncludePath>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;$(LibraryPath)</LibraryPath>
@@ -88,12 +88,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\cod4\angles.cpp" />
+    <ClCompile Include="src\cod4\cod4x.cpp" />
+    <ClCompile Include="src\cod4\hooks\hk_cod4x.cpp" />
     <ClCompile Include="src\cod4\hooks\hk_CL_Frame.cpp" />
     <ClCompile Include="src\cod4\hooks\hk_d3d.cpp" />
-    <ClCompile Include="src\cod4\hooks\init.cpp" />
+    <ClCompile Include="src\cod4\hooks\hk_simcrash.cpp" />
+    <ClCompile Include="src\cod4\hooks\inithooks.cpp" />
+    <ClCompile Include="src\cod4\initcod4.cpp" />
+    <ClCompile Include="src\cod4\pm\functions.cpp" />
     <ClCompile Include="src\cod4\recorder.cpp" />
     <ClCompile Include="src\cod4\replayer.cpp" />
     <ClCompile Include="src\cod4\hooks\hk_CL_CreateCmd.cpp" />
+    <ClCompile Include="src\cod4\simulation.cpp" />
     <ClCompile Include="src\imgui\imgui.cpp" />
     <ClCompile Include="src\imgui\imgui_demo.cpp" />
     <ClCompile Include="src\imgui\imgui_draw.cpp" />
@@ -110,37 +116,89 @@
     <ClCompile Include="src\timing.cpp" />
     <ClCompile Include="src\userinterface.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\vec.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\cod4\angles.h" />
+    <ClInclude Include="src\cod4\cl\functions.h" />
+    <ClInclude Include="src\cod4\cod4x.h" />
     <ClInclude Include="src\cod4\enums\actionslottype.h" />
+    <ClInclude Include="src\cod4\enums\activereticletype.h" />
+    <ClInclude Include="src\cod4\enums\ammocountercliptype.h" />
     <ClInclude Include="src\cod4\enums\cubemapshot.h" />
     <ClInclude Include="src\cod4\enums\demotype.h" />
+    <ClInclude Include="src\cod4\enums\guidedmissiletype.h" />
     <ClInclude Include="src\cod4\enums\he_type.h" />
+    <ClInclude Include="src\cod4\enums\impacttype.h" />
     <ClInclude Include="src\cod4\enums\invalidcmdhinttype.h" />
     <ClInclude Include="src\cod4\enums\maptype.h" />
     <ClInclude Include="src\cod4\enums\materialworldvertexformat.h" />
     <ClInclude Include="src\cod4\enums\objectivestate.h" />
+    <ClInclude Include="src\cod4\enums\offhandclass.h" />
     <ClInclude Include="src\cod4\enums\offhandsecondaryclass.h" />
+    <ClInclude Include="src\cod4\enums\penetratetype.h" />
+    <ClInclude Include="src\cod4\enums\pmeflags.h" />
+    <ClInclude Include="src\cod4\enums\pmflags.h" />
+    <ClInclude Include="src\cod4\enums\pmtype.h" />
     <ClInclude Include="src\cod4\enums\stancestate.h" />
     <ClInclude Include="src\cod4\enums\team.h" />
+    <ClInclude Include="src\cod4\enums\tracehittype.h" />
     <ClInclude Include="src\cod4\enums\tr_type.h" />
     <ClInclude Include="src\cod4\enums\viewlocktypes.h" />
     <ClInclude Include="src\cod4\enums\visionsetlerpstyle.h" />
+    <ClInclude Include="src\cod4\enums\weapclass.h" />
+    <ClInclude Include="src\cod4\enums\weapfiretype.h" />
+    <ClInclude Include="src\cod4\enums\weapinventorytype.h" />
+    <ClInclude Include="src\cod4\enums\weaponflags.h" />
+    <ClInclude Include="src\cod4\enums\weaponiconratiotype.h" />
+    <ClInclude Include="src\cod4\enums\weapoverlayinteface.h" />
+    <ClInclude Include="src\cod4\enums\weapoverlayreticle.h" />
+    <ClInclude Include="src\cod4\enums\weapprojexposion.h" />
+    <ClInclude Include="src\cod4\enums\weapstance.h" />
+    <ClInclude Include="src\cod4\enums\weapstickinesstype.h" />
+    <ClInclude Include="src\cod4\enums\weaptype.h" />
+    <ClInclude Include="src\cod4\helper.h" />
+    <ClInclude Include="src\cod4\initcod4.h" />
+    <ClInclude Include="src\cod4\pm\functions.h" />
     <ClInclude Include="src\cod4\globaldatapointers.h" />
     <ClInclude Include="src\cod4\recorder.h" />
     <ClInclude Include="src\cod4\replayer.h" />
+    <ClInclude Include="src\cod4\simulation.h" />
     <ClInclude Include="src\cod4\types\$BE9F66374A020A9809EEAF403416A176.h" />
     <ClInclude Include="src\cod4\types\$F6DFD6D87F75480A1EF1906639406DF5.h" />
+    <ClInclude Include="src\cod4\types\brushwrapper.h" />
     <ClInclude Include="src\cod4\types\cardmemory.h" />
+    <ClInclude Include="src\cod4\types\cbrushside.h" />
     <ClInclude Include="src\cod4\types\centity.h" />
     <ClInclude Include="src\cod4\types\clientarchivedata.h" />
     <ClInclude Include="src\cod4\types\clientstate.h" />
     <ClInclude Include="src\cod4\types\complex.h" />
+    <ClInclude Include="src\cod4\types\cplane.h" />
     <ClInclude Include="src\cod4\types\cpose.h" />
+    <ClInclude Include="src\cod4\types\dobjanimmat.h" />
     <ClInclude Include="src\cod4\types\entitystate.h" />
+    <ClInclude Include="src\cod4\types\fxeffectdef.h" />
+    <ClInclude Include="src\cod4\types\fxeffectdefref.h" />
+    <ClInclude Include="src\cod4\types\fxelematlas.h" />
+    <ClInclude Include="src\cod4\types\fxelemdef.h" />
+    <ClInclude Include="src\cod4\types\fxelemdefvisuals.h" />
+    <ClInclude Include="src\cod4\types\fxelemmarkvisuals.h" />
+    <ClInclude Include="src\cod4\types\fxelemvelstatesample.h" />
+    <ClInclude Include="src\cod4\types\fxelemvec3range.h" />
+    <ClInclude Include="src\cod4\types\fxelemvelstateinframe.h" />
+    <ClInclude Include="src\cod4\types\fxelemvisstatesample.h" />
+    <ClInclude Include="src\cod4\types\fxelemvisuals.h" />
+    <ClInclude Include="src\cod4\types\fxelemvisualstate.h" />
+    <ClInclude Include="src\cod4\types\fxfloatrange.h" />
+    <ClInclude Include="src\cod4\types\fxintrange.h" />
+    <ClInclude Include="src\cod4\types\fxspawndef.h" />
+    <ClInclude Include="src\cod4\types\fxspawndeflooping.h" />
+    <ClInclude Include="src\cod4\types\fxspawndefoneshot.h" />
+    <ClInclude Include="src\cod4\types\fxtraildef.h" />
+    <ClInclude Include="src\cod4\types\fxtrailvertex.h" />
     <ClInclude Include="src\cod4\types\gamestate.h" />
     <ClInclude Include="src\cod4\types\cg.h" />
+    <ClInclude Include="src\cod4\types\gfxcolor.h" />
     <ClInclude Include="src\cod4\types\gfxdepthoffield.h" />
     <ClInclude Include="src\cod4\types\gfxdrawsurf.h" />
     <ClInclude Include="src\cod4\types\gfxdrawsurffields.h" />
@@ -151,6 +209,7 @@
     <ClInclude Include="src\cod4\types\gfxlight.h" />
     <ClInclude Include="src\cod4\types\gfxlightdef.h" />
     <ClInclude Include="src\cod4\types\gfxlightimage.h" />
+    <ClInclude Include="src\cod4\types\gfxpackedvertex.h" />
     <ClInclude Include="src\cod4\types\gfxpixelshaderloaddef.h" />
     <ClInclude Include="src\cod4\types\gfxskincacheentry.h" />
     <ClInclude Include="src\cod4\types\gfxstatebits.h" />
@@ -165,6 +224,7 @@
     <ClInclude Include="src\cod4\types\hudelemsoundinfo.h" />
     <ClInclude Include="src\cod4\types\hudelem_color.h" />
     <ClInclude Include="src\cod4\types\lerpentitystate.h" />
+    <ClInclude Include="src\cod4\types\mantleresults.h" />
     <ClInclude Include="src\cod4\types\mantlestate.h" />
     <ClInclude Include="src\cod4\types\material.h" />
     <ClInclude Include="src\cod4\types\materialargumentcodeconst.h" />
@@ -186,14 +246,25 @@
     <ClInclude Include="src\cod4\types\materialvertexstreamrouting.h" />
     <ClInclude Include="src\cod4\types\objective.h" />
     <ClInclude Include="src\cod4\types\outpacket.h" />
+    <ClInclude Include="src\cod4\types\packedtexcoords.h" />
+    <ClInclude Include="src\cod4\types\packedunitvec.h" />
+    <ClInclude Include="src\cod4\types\physgeominfo.h" />
+    <ClInclude Include="src\cod4\types\physgeomlist.h" />
+    <ClInclude Include="src\cod4\types\physmass.h" />
+    <ClInclude Include="src\cod4\types\physpreset.h" />
     <ClInclude Include="src\cod4\types\picmip.h" />
     <ClInclude Include="src\cod4\types\playerentity.h" />
     <ClInclude Include="src\cod4\types\playerstate.h" />
+    <ClInclude Include="src\cod4\types\pml.h" />
+    <ClInclude Include="src\cod4\types\pmove.h" />
+    <ClInclude Include="src\cod4\types\pmovehandler.h" />
     <ClInclude Include="src\cod4\types\refdef.h" />
     <ClInclude Include="src\cod4\types\score.h" />
     <ClInclude Include="src\cod4\types\shellshock.h" />
     <ClInclude Include="src\cod4\types\snapshot.h" />
+    <ClInclude Include="src\cod4\types\snd_alias_list.h" />
     <ClInclude Include="src\cod4\types\sprintstate.h" />
+    <ClInclude Include="src\cod4\types\trace.h" />
     <ClInclude Include="src\cod4\types\trajectory.h" />
     <ClInclude Include="src\cod4\types\vec.h" />
     <ClInclude Include="src\cod4\types\viewdamage.h" />
@@ -201,6 +272,21 @@
     <ClInclude Include="src\cod4\types\visionsetvars.h" />
     <ClInclude Include="src\cod4\types\water.h" />
     <ClInclude Include="src\cod4\types\waterwritable.h" />
+    <ClInclude Include="src\cod4\types\WeaponDef.h" />
+    <ClInclude Include="src\cod4\types\xboneinfo.h" />
+    <ClInclude Include="src\cod4\types\xmodel.h" />
+    <ClInclude Include="src\cod4\types\xmodelcollsurf.h" />
+    <ClInclude Include="src\cod4\types\xmodelcolltri.h" />
+    <ClInclude Include="src\cod4\types\xmodelhighmipbounds.h" />
+    <ClInclude Include="src\cod4\types\xmodellodinfo.h" />
+    <ClInclude Include="src\cod4\types\xmodelstreaminfo.h" />
+    <ClInclude Include="src\cod4\types\xrigidvertlist.h" />
+    <ClInclude Include="src\cod4\types\xsurface.h" />
+    <ClInclude Include="src\cod4\types\xsurfacecollisionaabb.h" />
+    <ClInclude Include="src\cod4\types\xsurfacecollisionleaf.h" />
+    <ClInclude Include="src\cod4\types\xsurfacecollisionnode.h" />
+    <ClInclude Include="src\cod4\types\xsurfacecollisiontree.h" />
+    <ClInclude Include="src\cod4\types\xsurfacevertexinfo.h" />
     <ClInclude Include="src\imgui\extras.h" />
     <ClInclude Include="src\vec.h" />
     <ClInclude Include="src\helper.h" />

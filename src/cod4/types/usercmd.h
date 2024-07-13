@@ -1,10 +1,11 @@
 #pragma once
+#include "../../vec.h"
 
 struct usercmd_t
 {
 	int servertime;
 	int buttons;
-	int viewangles[3];
+	ivec3 viewangles;
 	char weaponIndex;
 	char a1;
 	char forwardmove;

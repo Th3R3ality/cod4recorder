@@ -14,6 +14,7 @@ namespace dataid
 
 #define SIGWITHSIZE(x) x, sizeof(x)
 #define BASE 0x400000
+#define JUSTADDR(x) { SIGWITHSIZE(""), 0, x - BASE, x }
 
 	namespace func
 	{
@@ -25,6 +26,9 @@ namespace dataid
 		constexpr SigOffsetPair CL_MouseMove = { SIGWITHSIZE("83 EC 4C 53 8B 5C 24 54 56"), 0, 0x63490 , 0x63490 + BASE};
 		constexpr SigOffsetPair CL_FinishMove = { SIGWITHSIZE("A0 ?? ?? ?? ?? 8A 0D"), 0, 0x63A60 , 0x63A60 + BASE};
 		constexpr SigOffsetPair restart_input = { SIGWITHSIZE(""), 0, 0x175E90 , 0x175E90 + BASE};
+
+		constexpr SigOffsetPair simcrash1 = JUSTADDR(0x00537D10);
+		constexpr SigOffsetPair simcrash2 = JUSTADDR(0x004053D0);
 	}
 
 	namespace d3d

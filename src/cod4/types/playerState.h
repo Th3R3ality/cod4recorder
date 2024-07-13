@@ -22,9 +22,9 @@ struct playerState_t
 	int weapFlags;
 	int otherFlags;
 	int pm_time;
-	float origin[3];
-	float velocity[3];
-	float oldVelocity[2];
+	fvec3 origin;
+	fvec3 velocity;
+	fvec2 oldVelocity;
 	int weaponTime;
 	int weaponDelay;
 	int grenadeTimeLeft;
@@ -66,7 +66,7 @@ struct playerState_t
 	int spreadOverride;
 	int spreadOverrideState;
 	int viewmodelIndex;
-	float viewangles[3];
+	fvec3 viewangles;
 	int viewHeightTarget;
 	float viewHeightCurrent;
 	int viewHeightLerpTime;

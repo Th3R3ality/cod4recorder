@@ -26,6 +26,7 @@ DWORD WINAPI MainThread(HMODULE hModule)
 	printf("hello\n");
 	printf("BaseAddress : %x\n", global::baseAddress);
 
+	cod4::Init();
 	fsio::Init();
 	timing::Init();
 	hooks::Init();
@@ -86,9 +87,12 @@ BOOL WINAPI DllMain(HMODULE hMod, DWORD dwReason, LPVOID lpReserved)
 }
 LRESULT __stdcall WndProc(const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	input::WndProc(hWnd, uMsg, wParam, lParam);
+	bool doOrig = input::WndProc(hWnd, uMsg, wParam, lParam);
 
 	if (true && ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam))
+		return true;
+
+	if (!doOrig)
 		return true;
 
 	return CallWindowProc(orig_WndProc, hWnd, uMsg, wParam, lParam);

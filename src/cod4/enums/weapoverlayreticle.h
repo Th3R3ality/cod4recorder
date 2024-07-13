@@ -1,0 +1,7 @@
+#pragma once
+enum weapOverlayReticle_t
+{
+	WEAPOVERLAYRETICLE_NONE = 0x0,
+	WEAPOVERLAYRETICLE_CROSSHAIR = 0x1,
+	WEAPOVERLAYRETICLE_NUM = 0x2,
+};

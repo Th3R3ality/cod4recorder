@@ -13,9 +13,9 @@ struct refdef_t
 	unsigned int height;
 	float tanHalfFovX;
 	float tanHalfFovY;
-	float vieworg[3];
-	float viewaxis[3][3];
-	float viewOffset[3];
+	fvec3 vieworg;
+	fvec3 viewaxis[3];
+	fvec3 viewOffset;
 	int time;
 	float zNear;
 	float blurRadius;

@@ -1,0 +1,13 @@
+#pragma once
+enum pmtype_t
+{
+	PM_NORMAL = 0x0,
+	PM_NORMAL_LINKED = 0x1,
+	PM_NOCLIP = 0x2,
+	PM_UFO = 0x3,
+	PM_SPECTATOR = 0x4,
+	PM_INTERMISSION = 0x5,
+	PM_LASTSTAND = 0x6,
+	PM_DEAD = 0x7,
+	PM_DEAD_LINKED = 0x8,
+};

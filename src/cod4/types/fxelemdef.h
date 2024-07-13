@@ -1,0 +1,50 @@
+#pragma once
+#include "fxspawndef.h"
+#include "fxfloatrange.h"
+#include "fxintrange.h"
+#include "fxelematlas.h"
+#include "fxelemvelstatesample.h"
+#include "fxelemvisstatesample.h"
+#include "fxelemdefvisuals.h"
+#include "fxeffectdefref.h"
+#include "fxtraildef.h"
+
+const struct FxElemDef
+{
+	int flags;
+	FxSpawnDef spawn;
+	FxFloatRange spawnRange;
+	FxFloatRange fadeInRange;
+	FxFloatRange fadeOutRange;
+	float spawnFrustumCullRadius;
+	FxIntRange spawnDelayMsec;
+	FxIntRange lifeSpanMsec;
+	FxFloatRange spawnOrigin[3];
+	FxFloatRange spawnOffsetRadius;
+	FxFloatRange spawnOffsetHeight;
+	FxFloatRange spawnAngles[3];
+	FxFloatRange angularVelocity[3];
+	FxFloatRange initialRotation;
+	FxFloatRange gravity;
+	FxFloatRange reflectionFactor;
+	FxElemAtlas atlas;
+	char elemType;
+	char visualCount;
+	char velIntervalCount;
+	char visStateIntervalCount;
+	FxElemVelStateSample* velSamples;
+	FxElemVisStateSample* visSamples;
+	FxElemDefVisuals visuals;
+	float collMins[3];
+	float collMaxs[3];
+	FxEffectDefRef effectOnImpact;
+	FxEffectDefRef effectOnDeath;
+	FxEffectDefRef effectEmitted;
+	FxFloatRange emitDist;
+	FxFloatRange emitDistVariance;
+	FxTrailDef* trailDef;
+	char sortOrder;
+	char lightingFrac;
+	char useItemClip;
+	char unused[1];
+};

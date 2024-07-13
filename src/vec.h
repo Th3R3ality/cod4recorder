@@ -5,6 +5,9 @@
 #include <cmath>
 
 template <class T>
+struct vec3;
+
+template <class T>
 struct vec2
 {
 	T x, y;
@@ -13,6 +16,7 @@ struct vec2
 	constexpr vec2(const T& v) { x = v; y = v; }
 	constexpr vec2(const T& a, const T& b) { x = a; y = b; }
 	constexpr vec2(const T* a) { x = a[0]; y = a[1]; }
+	constexpr vec2(const vec3<T> v) { x = v.x; y = v.y; }
 
 	//constexpr vec2(const float(*a)[2]) { x = a[0]; y = a[1];  }
 #ifdef IMGUI_API
@@ -49,6 +53,10 @@ struct vec2
 	operator vec2<int>() { return { (int)x, (int)y }; }
 	operator vec2<float>() { return { (float)x, (float)y }; }
 
+	T& operator[](const int index) const
+	{
+		return ((T*)&x)[index];
+	}
 
 	float mag() const
 	{
@@ -314,3 +322,6 @@ struct vec3
 
 using ivec3 = vec3<int>;
 using fvec3 = vec3<float>;
+
+
+ivec3 Angles2Shorts(const fvec3& angles);

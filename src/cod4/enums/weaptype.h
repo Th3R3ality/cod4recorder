@@ -1,0 +1,9 @@
+#pragma once
+enum weapType_t
+{
+	WEAPTYPE_BULLET = 0x0,
+	WEAPTYPE_GRENADE = 0x1,
+	WEAPTYPE_PROJECTILE = 0x2,
+	WEAPTYPE_BINOCULARS = 0x3,
+	WEAPTYPE_NUM = 0x4,
+};

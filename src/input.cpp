@@ -6,7 +6,7 @@
 
 namespace input
 {
-	void WndProc(const HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+	bool WndProc(const HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (msg)
 		{
@@ -55,5 +55,10 @@ namespace input
 			break;
 		}
 		}
+
+		if (userinterface::showMenu)
+			return false;
+
+		return true;
 	}
 }

@@ -3,5 +3,5 @@
 
 namespace input
 {
-	void WndProc(const HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	bool WndProc(const HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 }

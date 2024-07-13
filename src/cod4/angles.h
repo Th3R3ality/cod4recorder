@@ -27,3 +27,6 @@ inline fvec2 GetViewAngles()
 {
 	return fvec2(dataptr::client->cgameViewangles);
 }
+void AngleVectors(const fvec3& angles, fvec3* forward, fvec3* right, fvec3* up);
+
+

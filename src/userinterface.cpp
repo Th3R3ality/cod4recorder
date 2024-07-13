@@ -13,6 +13,7 @@
 
 #include "cod4/angles.h"
 #include "imgui/imgui_internal.h"
+#include "cod4/simulation.h"
 
 #define PUSHGREYBTN(x) \
 PushStyleColor(ImGuiCol_Button, ImColor(50, 200, 100, 80).Value); \
@@ -276,7 +277,6 @@ namespace userinterface
 
 		if (CollapsingHeader("Recordings in Memory"))
 		{
-
 			static std::shared_ptr<recorder::Recording> deletionRecording = nullptr;
 			for (std::shared_ptr<recorder::Recording> recording : recorder::recordings)
 			{
@@ -337,8 +337,6 @@ namespace userinterface
 						deletionRecording
 					)
 				);
-
-				
 				deletionRecording = nullptr;
 			}
 		}
@@ -383,57 +381,65 @@ namespace userinterface
 		{
 			Begin("Debug Controls");
 
-			fvec2 realrealangles = GetRealAngles();
-			Text("realrealangles");
-			Text("    %f, %f", realrealangles.x, realrealangles.y);
+			if (Button("Test Simulate 3F"))
+			{
+				simulation::test::Forward3Steps();
+			}
 
-			fvec2 cgameangles = fvec2(dataptr::client->cgameViewangles);
-			Text("cgameangles");
-			Text("    %f, %f", cgameangles.x, cgameangles.y);
+			if (TreeNode("angles"))
+			{
+				fvec2 realrealangles = GetRealAngles();
+				Text("realrealangles");
+				Text("    %f, %f", realrealangles.x, realrealangles.y);
 
-			fvec2 predictedangles = { dataptr::cg->predictedPlayerState.delta_angles[0], dataptr::cg->predictedPlayerState.delta_angles[1] };
-			Text("predictedangles");
-			Text("    %f, %f", predictedangles.x, predictedangles.y);
+				fvec2 cgameangles = fvec2(dataptr::client->cgameViewangles);
+				Text("cgameangles");
+				Text("    %f, %f", cgameangles.x, cgameangles.y);
 
-			fvec2 deltaangles = { dataptr::cg->nextSnap->ps.delta_angles[0], dataptr::cg->nextSnap->ps.delta_angles[1] };
-			Text("deltaangles");
-			Text("    %f, %f", deltaangles.x, deltaangles.y);
+				fvec2 predictedangles = { dataptr::cg->predictedPlayerState.delta_angles[0], dataptr::cg->predictedPlayerState.delta_angles[1] };
+				Text("predictedangles");
+				Text("    %f, %f", predictedangles.x, predictedangles.y);
 
-			fvec2 viewangles = { dataptr::client->viewangles[0], dataptr::client->viewangles[1] };
-			Text("client->viewangles");
-			Text("    %f, %f", viewangles.x, viewangles.y);
+				fvec2 deltaangles = { dataptr::cg->nextSnap->ps.delta_angles[0], dataptr::cg->nextSnap->ps.delta_angles[1] };
+				Text("deltaangles");
+				Text("    %f, %f", deltaangles.x, deltaangles.y);
 
-			fvec2 realangles = AngleNormalize180(viewangles + deltaangles);
-			Text("realangles");
-			Text("    %f, %f", realangles.x, realangles.y);
+				fvec2 viewangles = { dataptr::client->viewangles[0], dataptr::client->viewangles[1] };
+				Text("client->viewangles");
+				Text("    %f, %f", viewangles.x, viewangles.y);
 
-			fvec2 cmdangles = { SHORT2ANGLE(global::cmd.viewangles[0]), SHORT2ANGLE(global::cmd.viewangles[1])};
-			Text("cmd angle");
-			Text("    %f, %f", cmdangles.x, cmdangles.y);
+				fvec2 realangles = AngleNormalize180(viewangles + deltaangles);
+				Text("realangles");
+				Text("    %f, %f", realangles.x, realangles.y);
 
-			fvec2 deltas = AngleDelta(deltaangles, cmdangles);
-			Text("deltas");
-			Text("    %f, %f", deltas.x, deltas.y);
+				fvec2 cmdangles = { SHORT2ANGLE(global::cmd.viewangles[0]), SHORT2ANGLE(global::cmd.viewangles[1]) };
+				Text("cmd angle");
+				Text("    %f, %f", cmdangles.x, cmdangles.y);
 
-			fvec2 real_delta = AngleDelta(deltas, deltaangles);
-			Text("real_delta");
-			Text("    %f, %f", real_delta.x, real_delta.y);
+				fvec2 deltas = AngleDelta(deltaangles, cmdangles);
+				Text("deltas");
+				Text("    %f, %f", deltas.x, deltas.y);
 
-			fvec2 test = { -AngleNormalize180(cmdangles.x), -AngleNormalize180(cmdangles.y) };
-			Text("test");
-			Text("    %f, %f", test.x, test.y);
+				fvec2 real_delta = AngleDelta(deltas, deltaangles);
+				Text("real_delta");
+				Text("    %f, %f", real_delta.x, real_delta.y);
 
-			fvec2 final = AngleDelta(deltaangles, fvec2(0.f, 90.f));
-			Text("final");
-			Text("    %f, %f", final.x, final.y);
+				fvec2 test = { -AngleNormalize180(cmdangles.x), -AngleNormalize180(cmdangles.y) };
+				Text("test");
+				Text("    %f, %f", test.x, test.y);
 
-			fvec2 finaladd = test - final;
-			Text("finaladd");
-			Text("    %f, %f", finaladd.x, finaladd.y);
+				fvec2 final = AngleDelta(deltaangles, fvec2(0.f, 90.f));
+				Text("final");
+				Text("    %f, %f", final.x, final.y);
 
+				fvec2 finaladd = test - final;
+				Text("finaladd");
+				Text("    %f, %f", finaladd.x, finaladd.y);
+
+				TreePop();
+			}
 
 			Text("com_maxfps %i", GetDvar(dataid::dvar::com_maxfps.offset)->current.integer);
-
 			if (CollapsingHeader("cmd view"))
 			{
 				global::viewcmd = true;
@@ -544,7 +550,7 @@ namespace userinterface
 			size.x *= 2;
 			size.y *= 2;
 			SetNextWindowSize(size);
-			SetNextWindowPos(ImVec2(clientRect.right / 2 - size.x / 2, (clientRect.bottom * 6) / 7));
+			SetNextWindowPos(ImVec2(clientSize.x / 2 - size.x / 2, (clientSize.y * 6) / 7));
 
 			PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 			PushStyleVar(ImGuiStyleVar_FrameRounding, 10);
@@ -570,7 +576,7 @@ namespace userinterface
 
 		// countdown indicators
 		{
-			auto indicatorPos = ImVec2(clientRect.right / 2 - defaultSize.x / 2, (clientRect.bottom * 3) / 4);
+			auto indicatorPos = ImVec2(clientSize.x / 2 - defaultSize.x / 2, (clientSize.y * 3) / 4);
 			if (userinterface::replayCountDown > 0)
 			{
 				std::string text = std::format("Replaying in {}", userinterface::replayCountDown);

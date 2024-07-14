@@ -552,7 +552,7 @@ static void ShowDemoWindowWidgets()
         }
 
         {
-            static int i1=0;
+            static int i1 = 0;
             ImGui::SliderInt("slider int", &i1, -1, 3);
             ImGui::SameLine(); HelpMarker("CTRL+click to input value.");
 

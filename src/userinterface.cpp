@@ -381,10 +381,12 @@ namespace userinterface
 		{
 			Begin("Debug Controls");
 
-			if (Button("Test Simulate 3F"))
+			static int stepCount = 50;
+			if (Button("Test Simulate"))
 			{
-				simulation::test::Forward3Steps();
+				simulation::test::ForwardSteps(stepCount);
 			}
+			SliderInt("Steps", &stepCount, 1, 100);
 
 			if (TreeNode("angles"))
 			{
@@ -630,6 +632,7 @@ namespace userinterface
 
 		ImDrawList* drawlist = ImGui::GetWindowDrawList();
 
+#pragma region RecordingOrigins
 		for (auto& rec : recorder::recordings)
 		{
 			std::optional<ivec2> xy = WorldToScreen(rec->startPos);
@@ -645,11 +648,25 @@ namespace userinterface
 					xy.value(),
 					col);
 				world::TextCenteredColored(drawlist,
-					std::format("{}",dist).c_str(),
+					std::format("{}", dist).c_str(),
 					xy.value() + ivec2(0, 12),
 					col);
 			}
 		}
+#pragma endregion
+
+#pragma region SimulationTrail
+		const std::vector<fvec3> trailCopy = simulation::trail;
+		for (const fvec3& point : trailCopy)
+		{
+			std::optional<ivec2> xy = WorldToScreen(point);
+			if (xy.has_value())
+			{
+				drawlist->AddLine(xy->operator ImVec2(), ImVec2(xy.value() + ivec2(1, 1)), ImColor(0.f,1.f,0.f));
+			}
+		}
+#pragma endregion
+
 
 		ImGui::End();
 	}
@@ -718,6 +735,8 @@ namespace userinterface
 
 	namespace world
 	{
+
+
 		void TextCentered(ImDrawList* drawList, const char* text, ivec2& xy)
 		{
 			TextCenteredColored(drawList, text, xy, ImColor(1.f, 1.f, 1.f, 1.f));

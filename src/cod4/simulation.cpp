@@ -29,6 +29,15 @@ void simulation::SimulateStep(pmove_t* pm, pml_t* pml)
 	pm->cmd.sidemove = 0; // controller->rightmove;
 	pm->cmd.buttons = 0; // controller->buttons;
 
+	fvec3 deltas = {};
+
+	// DO ROTATION DELTA LOGIC HERE
+
+	ps->viewangles += deltas;
+	pm->cmd.viewangles += Angles2Shorts(deltas);
+
+
+
 	if ((ps->pm_flags & PMF_MELEE_CHARGE) != 0)
 		pm->cmd.forwardmove = 127;
 
@@ -113,22 +122,6 @@ void simulation::SimulateStep(pmove_t* pm, pml_t* pml)
 	pml->frametime = (float)pml->msec / 1000.f;
 	pm->cmd.servertime += pml->msec;
 	ps->commandTime += pml->msec;
-	pm->cmd.buttons = 0; // CMD BUTTONS FOR THIS FRAME
-
-
-	fvec3 deltas = {};
-
-	// DO ROTATION DELTA LOGIC HERE
-
-	ps->viewangles += deltas;
-	//ps->viewangles[PITCH] += deltas.x;
-	//ps->viewangles[YAW] += deltas.y;
-	//ps->viewangles[ROLL] += deltas.z;
-
-	pm->cmd.viewangles += Angles2Shorts(deltas);
-	//pm->cmd.viewangles[PITCH] += ANGLE2SHORT(deltas.x);
-	//pm->cmd.viewangles[YAW] += ANGLE2SHORT(deltas.y);
-	//pm->cmd.viewangles[ROLL] += ANGLE2SHORT(deltas.z);
 
 	PM_AdjustAimSpreadScale(pm, pml);
 	PM_UpdateViewAngles(ps, pml->msec, &pm->cmd, pm->handler);
@@ -148,7 +141,6 @@ void simulation::SimulateStep(pmove_t* pm, pml_t* pml)
 
 	if ((ps->pm_flags & PMF_MANTLE) == 0)
 	{
-		//PM_UpdateAimDownSightFlag_(pm, pml);
 		PM_UpdateSprint(pm);
 		PM_UpdatePlayerWalkingFlag(pm);
 		PM_CheckDuck(pm, pml);
@@ -165,7 +157,6 @@ void simulation::SimulateStep(pmove_t* pm, pml_t* pml)
 		pml->groundPlane = 0;
 		pml->walking = 0;
 
-		//PM_UpdateAimDownSightFlag_(pm, pml);
 		PM_UpdateSprint(pm);
 		PM_UpdatePlayerWalkingFlag(pm);
 		PM_CheckDuck(pm, pml);
@@ -178,8 +169,6 @@ void simulation::SimulateStep(pmove_t* pm, pml_t* pml)
 	{
 		PM_UpdatePronePitch(pml, pm);
 		PM_DropTimers(ps, pml);
-		//if ( ps->pm_type >= PM_DEAD && pml->walking )
-		//	PM_DeadMove(ps);
 		PM_CheckLadderMove(pm, pml);
 
 		if ((ps->pm_flags & PMF_LADDER) != 0)
@@ -210,38 +199,29 @@ void simulation::SimulateStep(pmove_t* pm, pml_t* pml)
 	else if (pm->cmd.sidemove < 0)
 		pm->cmd.sidemove = -127;
 
-	//results.cmd_angles = pm->cmd.angles;
-	//results.weapon = pm->cmd.weapon;
-	//results.offhand = pm->cmd.offHandIndex;
-	//results.viewangles = ps->viewangles;
-	//results.origin = ps->origin;
-	//results.velocity = ps->velocity;
-	//results.mins = pm->mins;
-	//results.maxs = pm->maxs;
-	//results.buttons = pm->cmd.buttons;
-	//results.forwardmove = pm->cmd.forwardmove;
-	//results.rightmove = pm->cmd.rightmove;
-	//results.FPS = 1000 / pml->msec;
 	memcpy(&pm->oldcmd, &pm->cmd, sizeof(pm->oldcmd));
-	//pm->cmd.buttons = 0;
 
 	simulating = false;
 	return;
 }
 
-void simulation::test::Forward3Steps()
+void simulation::test::ForwardSteps(int steps)
 {
 	pmove_t pm = PM_Create(&dataptr::cg->predictedPlayerState, CL_GetUserCmd(dataptr::client->cmdNumber), CL_GetUserCmd(dataptr::client->cmdNumber - 1));
 	pml_t pml = PML_Create(&pm, Dvar_Find("com_maxfps")->current.integer);
 	playerState_t* ps = pm.ps;
 
-	printf("simulating 3 steps forward\n");
+	printf("simulating %i steps forward\n", steps);
 	printf("starting @ {%f, %f, %f}\n", ps->origin.x, ps->origin.y, ps->origin.z);
 
-	for (int i = 0; i < 50; i++)
+	trail.clear();
+	trail.emplace_back(ps->origin);
+
+	for (int i = 0; i < steps; i++)
 	{
 		SimulateStep(&pm, &pml);
-		printf("step %i @ {%f, %f, %f}\n", i, ps->origin.x, ps->origin.y, ps->origin.z);
+		//printf("step %i @ {%f, %f, %f}\n", i, ps->origin.x, ps->origin.y, ps->origin.z);
+		trail.emplace_back(ps->origin);
 	}
 	printf("simulation done\n");
 }

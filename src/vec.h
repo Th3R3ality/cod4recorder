@@ -58,9 +58,17 @@ struct vec2
 		return ((T*)&x)[index];
 	}
 
+	T sum() const noexcept
+	{
+		return x + y;
+	}
 	float mag() const
 	{
 		return sqrtf(x * x + y * y);
+	}
+	T magsq() const
+	{ //magnitude squared
+		return (x * x + y * y);
 	}
 	float dot(const vec2& vec) const
 	{
@@ -88,10 +96,6 @@ struct vec2
 	vec2 inverse() const
 	{
 		return { -x, -y };
-	}
-	float MagSq() const
-	{ //magnitude squared
-		return (x * x + y * y);
 	}
 	void clamp(const T min, const T max)
 	{
@@ -161,9 +165,17 @@ struct vec3
 		return ((T*)&x)[index];
 	}
 
+	T sum() const noexcept
+	{
+		return x + y + z;
+	}
 	float mag() const noexcept
 	{
 		return sqrtf(x * x + y * y + z * z);
+	}
+	T magsq() const noexcept
+	{ //magnitude squared
+		return (x * x + y * y + z * z);
 	}
 	float dot(const vec3& vec) const noexcept
 	{
@@ -196,10 +208,6 @@ struct vec3
 	vec3 abs() const noexcept
 	{
 		return { std::abs(x), std::abs(y), std::abs(z) };
-	}
-	float MagSq() const noexcept
-	{ //magnitude squared
-		return (x * x + y * y + z * z);
 	}
 	void clamp(const T min, const T max) noexcept
 	{

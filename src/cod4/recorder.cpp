@@ -118,7 +118,7 @@ namespace recorder
 		{
 			if (waitingForStandstill) // nesting these for performance (only 1 if check per iteration)
 			{
-				if (dataptr::client->cgameVelocity.MagSq() != 0)
+				if (dataptr::client->cgameVelocity.magsq() != 0)
 					return;
 				else
 				{
